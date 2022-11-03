@@ -20,4 +20,5 @@ int main(void) {
     cpu.s_reg = 12;
 
     printf("%d\n", cpu.memory[cpu.pc]);
+    printf("%d\n", cpu.memory[cpu.pc + 1]);
 }

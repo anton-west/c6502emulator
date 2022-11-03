@@ -17,4 +17,4 @@ cpu.o: $(SRC)cpu.c
 
 .PHONY: clean
 clean:
-	rm *.o
+	rm -rf *.o c6502
