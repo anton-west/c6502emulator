@@ -10,14 +10,14 @@ int main(void) {
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
     memory[10] = 123;
 
-    Cpu cpu;
+    Processor cpu;
 
     init_cpu(&cpu);
-    init_memory(&cpu, memory);
+    set_memory(&cpu, memory);
 
     cpu.pc = 10;
     cpu.sp = 11;
-    cpu.s_reg = 12;
+    cpu.status_reg = 12;
 
     printf("%d\n", cpu.memory[cpu.pc]);
     printf("%d\n", cpu.memory[cpu.pc + 1]);
