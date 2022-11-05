@@ -5,13 +5,16 @@
 
 #include "cpu.h"
 
-struct Instruction_info {
-    unsigned int opc;
-    unsigned int bytes;
-    unsigned int cycles;
-};
-
 typedef int (*opcode)(uint8_t byte, Processor *cpu);
+
+typedef enum address_mode {ACC, ABS, ABX, ABY, IMM, IMP, IND, XIN, INY, REL, ZEP, ZEX, ZEY, UDF} address_mode;
+
+typedef struct Instruction_info {
+    opcode fnc_ptr;
+    address_mode addr_mode;
+    unsigned int bytes;
+    unsigned int max_cycles;
+} II;
 
 //opcode declarations
 int I_ADC(uint8_t byte, Processor *cpu);
@@ -75,6 +78,6 @@ int U_DEF(uint8_t byte, Processor *cpu);    //UNDEFINED OPCODE, PLACEHOLDER FOR 
 
 opcode opcode_matrix[];
 
-opcode decode(uint8_t byte);
+opcode decode_instruction(uint8_t byte);
 
 #endif

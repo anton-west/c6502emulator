@@ -25,8 +25,48 @@ int main(void) {
 
     for (int i = 0; i<8; i++) {
         uint8_t byte = read(&cpu);
+        cpu.pc += 1;
         opcode ptr;
-        ptr = decode(byte);
+        ptr = decode_instruction(byte);
         ptr(byte, &cpu);
     }
+
+    setFlag('N', 1, &cpu);
+    printf("%x\n", cpu.status_reg);
+
+    setFlag('V', 1, &cpu);
+    printf("%x\n", cpu.status_reg);
+
+    setFlag('D', 1, &cpu);
+    printf("%x\n", cpu.status_reg);
+
+    setFlag('I', 1, &cpu);
+    printf("%x\n", cpu.status_reg);
+
+    setFlag('Z', 1, &cpu);
+    printf("%x\n", cpu.status_reg);
+
+    setFlag('C', 1, &cpu);
+    printf("%x\n", cpu.status_reg);
+
+
+
+
+    setFlag('C', 0, &cpu);
+    printf("%x\n", cpu.status_reg);
+
+    setFlag('Z', 0, &cpu);
+    printf("%x\n", cpu.status_reg);
+
+    setFlag('I', 0, &cpu);
+    printf("%x\n", cpu.status_reg);
+
+    setFlag('D', 0, &cpu);
+    printf("%x\n", cpu.status_reg);
+
+    setFlag('V', 0, &cpu);
+    printf("%x\n", cpu.status_reg);
+
+    setFlag('N', 0, &cpu);
+    printf("%x\n", cpu.status_reg);
 }
