@@ -20,6 +20,6 @@ void init_cpu(Processor *cpu);
 
 void set_memory(Processor *cpu, uint8_t *memory);
 
-uint8_t read(Processor *cpu);
+uint8_t cpu_ead(Processor *cpu);
 
 #endif

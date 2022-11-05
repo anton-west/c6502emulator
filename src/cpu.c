@@ -15,8 +15,7 @@ void set_memory(Processor *cpu, uint8_t *memory) {
     cpu->memory = memory;
 }
 
-uint8_t read(Processor *cpu) {
+uint8_t cpu_read(Processor *cpu) {
     uint16_t index = cpu->pc;
-    cpu->pc += 1;
     return cpu->memory[index];
 }
