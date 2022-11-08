@@ -29,7 +29,6 @@ int clock(Processor *cpu) {
         uint8_t instruction = read(cpu);
         cpu->pc += 1;   //read from memory, so increment pc
         opcode *ptr = decode_instruction(instruction);
-
     }
 
 }
@@ -50,42 +49,46 @@ int clock(Processor *cpu) {
     |+-------- Overflow
     +--------- Negative
 */
-int setFlag(const char flag, uint8_t value, Processor *cpu) {
+int setFlags(const char* flags, int n_flags, uint16_t value, Processor *cpu) {
     if (value >= 1) {
         value = 1;
     } else {
         value = 0;
     }
 
-    switch (flag)
-    {
-    case 'N':
-        cpu->status_reg = (cpu->status_reg & ~(1U << 7)) | (value << 7);
-        break;
-    
-    case 'V':
-        cpu->status_reg = (cpu->status_reg & ~(1U << 6)) | (value << 6);
-        break;
+    for (int i = 0; flags[i] != '\0'; i++) {
+        char flag = flags[i];
 
-    case 'D':
-        cpu->status_reg = (cpu->status_reg & ~(1U << 3)) | (value << 3);
-        break;
+        switch (flag)
+        {
+        case 'N':
+            cpu->status_reg = (cpu->status_reg & ~(1U << 7)) | (value << 7);
+            break;
 
-    case 'I':
-        cpu->status_reg = (cpu->status_reg & ~(1U << 2)) | (value << 2);
-        break;
+        case 'V':
+            cpu->status_reg = (cpu->status_reg & ~(1U << 6)) | (value << 6);
+            break;
 
-    case 'Z':
-        cpu->status_reg = (cpu->status_reg & ~(1U << 1)) | (value << 1);
-        break;
+        case 'D':
+            cpu->status_reg = (cpu->status_reg & ~(1U << 3)) | (value << 3);
+            break;
 
-    case 'C':
-        cpu->status_reg = (cpu->status_reg & ~(1U << 0)) | (value << 0);
-        break;
-    
-    default:
-        return -1;
+        case 'I':
+            cpu->status_reg = (cpu->status_reg & ~(1U << 2)) | (value << 2);
+            break;
+
+        case 'Z':
+            cpu->status_reg = (cpu->status_reg & ~(1U << 1)) | (value << 1);
+            break;
+
+        case 'C':
+            cpu->status_reg = (cpu->status_reg & ~(1U << 0)) | (value << 0);
+            break;
+
+        default:
+            return -1;
+        }
+
+        return 0;
     }
-
-    return 0;
 }

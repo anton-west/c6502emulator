@@ -4,10 +4,21 @@
 #include "cpu.h"
 
 
-int I_ADC(uint8_t byte, Processor *cpu) { 
+Ir* I_ADC(uint8_t byte, Processor *cpu, Ir *ir) { 
     switch (byte)
     {
-    case 0x69: printf("ADC\tIMM\n"); break;
+    case 0x69:
+        printf("ADC\tIMM\n");
+        ir->fnc_ptr = I_ADC;
+        ir->addr_mode = IMM;
+        ir->bytes = 2;
+        ir->cycles = 2;
+        
+        uint8_t operand_byte = read(cpu);
+        cpu->pc += 1;
+
+        uint16_t value = cpu->acc + operand_byte + cpu->status_reg;
+        break;
     case 0x65: printf("ADC\tZP \n"); break;
     case 0x75: printf("ADC\tZP, X\n"); break;
     case 0x6D: printf("ADC\tABS\n"); break;
@@ -18,67 +29,67 @@ int I_ADC(uint8_t byte, Processor *cpu) {
     default:
         break;
     }
-    return 0;
+    return ir;
 };
 
-int I_AND(uint8_t byte, Processor *cpu) { return 0; }
-int I_ASL(uint8_t byte, Processor *cpu) { return 0; }
-int I_BCC(uint8_t byte, Processor *cpu) { return 0; }
-int I_BCS(uint8_t byte, Processor *cpu) { return 0; }
-int I_BEQ(uint8_t byte, Processor *cpu) { return 0; }
-int I_BIT(uint8_t byte, Processor *cpu) { return 0; }
-int I_BMI(uint8_t byte, Processor *cpu) { return 0; }
-int I_BNE(uint8_t byte, Processor *cpu) { return 0; }
-int I_BPL(uint8_t byte, Processor *cpu) { return 0; }
-int I_BRK(uint8_t byte, Processor *cpu) { return 0; }
-int I_BVC(uint8_t byte, Processor *cpu) { return 0; }
-int I_BVS(uint8_t byte, Processor *cpu) { return 0; }
-int I_CLC(uint8_t byte, Processor *cpu) { return 0; }
-int I_CLD(uint8_t byte, Processor *cpu) { return 0; }
-int I_CLI(uint8_t byte, Processor *cpu) { return 0; }
-int I_CLV(uint8_t byte, Processor *cpu) { return 0; }
-int I_CMP(uint8_t byte, Processor *cpu) { return 0; }
-int I_CPX(uint8_t byte, Processor *cpu) { return 0; }
-int I_CPY(uint8_t byte, Processor *cpu) { return 0; }
-int I_DEC(uint8_t byte, Processor *cpu) { return 0; }
-int I_DEX(uint8_t byte, Processor *cpu) { return 0; }
-int I_DEY(uint8_t byte, Processor *cpu) { return 0; }
-int I_EOR(uint8_t byte, Processor *cpu) { return 0; }
-int I_INC(uint8_t byte, Processor *cpu) { return 0; }
-int I_INX(uint8_t byte, Processor *cpu) { return 0; }
-int I_INY(uint8_t byte, Processor *cpu) { return 0; }
-int I_JMP(uint8_t byte, Processor *cpu) { return 0; }
-int I_JSR(uint8_t byte, Processor *cpu) { return 0; }
-int I_LDA(uint8_t byte, Processor *cpu) { return 0; }
-int I_LDX(uint8_t byte, Processor *cpu) { return 0; }
-int I_LDY(uint8_t byte, Processor *cpu) { return 0; }
-int I_LSR(uint8_t byte, Processor *cpu) { return 0; }
-int I_NOP(uint8_t byte, Processor *cpu) { return 0; }
-int I_ORA(uint8_t byte, Processor *cpu) { return 0; }
-int I_PHA(uint8_t byte, Processor *cpu) { return 0; }
-int I_PHP(uint8_t byte, Processor *cpu) { return 0; }
-int I_PLA(uint8_t byte, Processor *cpu) { return 0; }
-int I_PLP(uint8_t byte, Processor *cpu) { return 0; }
-int I_ROL(uint8_t byte, Processor *cpu) { return 0; }
-int I_ROR(uint8_t byte, Processor *cpu) { return 0; }
-int I_RTI(uint8_t byte, Processor *cpu) { return 0; }
-int I_RTS(uint8_t byte, Processor *cpu) { return 0; }
-int I_SBC(uint8_t byte, Processor *cpu) { return 0; }
-int I_SEC(uint8_t byte, Processor *cpu) { return 0; }
-int I_SED(uint8_t byte, Processor *cpu) { return 0; }
-int I_SEI(uint8_t byte, Processor *cpu) { return 0; }
-int I_STA(uint8_t byte, Processor *cpu) { return 0; }
-int I_STX(uint8_t byte, Processor *cpu) { return 0; }
-int I_STY(uint8_t byte, Processor *cpu) { return 0; }
-int I_TAX(uint8_t byte, Processor *cpu) { return 0; }
-int I_TAY(uint8_t byte, Processor *cpu) { return 0; }
-int I_TSX(uint8_t byte, Processor *cpu) { return 0; }
-int I_TXA(uint8_t byte, Processor *cpu) { return 0; }
-int I_TXS(uint8_t byte, Processor *cpu) { return 0; }
-int I_TYA(uint8_t byte, Processor *cpu) { return 0; }
+Ir* I_AND(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_ASL(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_BCC(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_BCS(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_BEQ(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_BIT(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_BMI(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_BNE(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_BPL(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_BRK(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_BVC(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_BVS(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_CLC(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_CLD(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_CLI(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_CLV(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_CMP(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_CPX(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_CPY(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_DEC(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_DEX(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_DEY(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_EOR(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_INC(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_INX(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_INY(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_JMP(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_JSR(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_LDA(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_LDX(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_LDY(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_LSR(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_NOP(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_ORA(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_PHA(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_PHP(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_PLA(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_PLP(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_ROL(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_ROR(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_RTI(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_RTS(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_SBC(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_SEC(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_SED(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_SEI(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_STA(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_STX(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_STY(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_TAX(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_TAY(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_TSX(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_TXA(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_TXS(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+Ir* I_TYA(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
 
-int U_DEF(uint8_t byte, Processor *cpu) { return -1; }
-/*
+Ir* U_DEF(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+
 opcode opcode_matrix[] = {  I_BRK, I_ORA, U_DEF, U_DEF,     U_DEF, I_ORA, I_ASL, U_DEF,     I_PHP, I_ORA, I_ASL, U_DEF,     U_DEF, I_ORA, I_ASL, U_DEF,
                             I_BPL, I_ORA, U_DEF, U_DEF,     U_DEF, I_ORA, I_ASL, U_DEF,     I_CLC, I_ORA, U_DEF, U_DEF,     U_DEF, I_ORA, I_ASL, U_DEF,
                             I_JSR, I_AND, U_DEF, U_DEF,     I_BIT, I_AND, I_ROL, U_DEF,     I_PLP, I_AND, I_ROL, U_DEF,     I_BIT, I_AND, I_ROL, U_DEF,
@@ -98,10 +109,8 @@ opcode opcode_matrix[] = {  I_BRK, I_ORA, U_DEF, U_DEF,     U_DEF, I_ORA, I_ASL,
                             I_BNE, I_CMP, U_DEF, U_DEF,     U_DEF, I_CMP, I_DEC, U_DEF,     I_CLD, I_CMP, U_DEF, U_DEF,     U_DEF, I_CMP, I_DEC, U_DEF,
                             I_CPX, I_SBC, U_DEF, U_DEF,     I_CPX, I_SBC, I_INC, U_DEF,     I_INX, I_SBC, I_NOP, U_DEF,     I_CPX, I_SBC, I_INC, U_DEF,
                             I_BEQ, I_SBC, U_DEF, U_DEF,     U_DEF, I_SBC, I_INC, U_DEF,     I_SED, I_SBC, U_DEF, U_DEF,     U_DEF, I_SBC, I_INC, U_DEF  };
-*/
 
-struct Instruction_info opcode_matrix[] = { (II){I_BRK, IMP, 1, 7}, (II){I_ORA, XIN, 2, 6}, (II){U_DEF, UDF, 0, 0}, (II){U_DEF, UDF, 0, 0}, (II){U_DEF, UDF, 0, 0}};
-
+//struct Instruction_info opcode_matrix[] = { (II){I_BRK, IMP, 1, 7}, (II){I_ORA, XIN, 2, 6}, (II){U_DEF, UDF, 0, 0}, (II){U_DEF, UDF, 0, 0}, (II){U_DEF, UDF, 0, 0}};
 
 opcode decode_instruction(uint8_t byte) {
     return opcode_matrix[ byte ];
