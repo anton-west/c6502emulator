@@ -34,10 +34,14 @@ void init_cpu(Processor *cpu);
 
 void set_memory(Processor *cpu, uint8_t *memory);
 
-uint8_t read(Processor *cpu);
+uint8_t fetch(Processor *cpu);
+
+uint8_t read(Processor *cpu, uint16_t addr);
 
 int clock(Processor *cpu);
 
-int setFlag(const char flag, uint8_t value, Processor *cpu);
+int setFlag(const char flag, uint16_t value, Processor *cpu);
+
+int getFlag(const char flag, Processor *cpu);
 
 #endif

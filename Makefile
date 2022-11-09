@@ -1,23 +1,20 @@
 CC=gcc
 CFLAGS=-Wall -Wextra -pedantic
-SRC=./src/
-BLD=./build/
+
+objects = main.o cpu.o opcodes.o
 
 all: c6502
 	./c6502
 
-c6502: main.o cpu.o opcodes.o
-	$(CC) $(CFLAGS) -o c6502 main.o cpu.o opcodes.o
+c6502: $(objects)
+	cc -o c6502 $(objects)
 
-main.o: $(SRC)main.c $(SRC)cpu.h $(SRC)opcodes.h
-	$(CC) $(CFLAGS) $(SRC)main.c -c
+main.o: cpu.h
 
-cpu.o: $(SRC)cpu.c
-	$(CC) $(CFLAGS) $(SRC)cpu.c -c
+cpu.o: cpu.h opcodes.h
 
-opcodes.o: $(SRC)opcodes.c $(SRC)cpu.h
-	$(CC) $(CFLAGS) $(SRC)opcodes.c -c
+opcodes.o: cpu.h opcodes.h
 
 .PHONY: clean
 clean:
-	rm -rf *.o c6502
+	rm -f *.o c6502

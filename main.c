@@ -2,35 +2,34 @@
 #include <stdint.h>
 
 #include "cpu.h"
-#include "opcodes.h"
 
 #define MAX_MEMORY_ADDR 65536
 
 int main(void) {
     
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
-    memory[0] = 0x69;
-    memory[1] = 0x65;
-    memory[2] = 0x75;
-    memory[3] = 0x6D;
-    memory[4] = 0x7D;
-    memory[5] = 0x79;
-    memory[6] = 0x61;
-    memory[7] = 0x71;
+    /*
+    memory[0] = 0x0024;
+    memory[1] = 0x0002;
+    memory[2] = 0x0001;
+    */
+    memory[0] = 0x2C;
+    memory[1] = 0x01;
+    memory[2] = 0x01;
+    memory[0x0101] = 0x00;
 
     Processor cpu;
 
     init_cpu(&cpu);
+    cpu.acc = 0xF1;
     set_memory(&cpu, memory);
 
-    for (int i = 0; i<8; i++) {
-        uint8_t byte = read(&cpu);
-        cpu.pc += 1;
-        opcode ptr;
-        ptr = decode_instruction(byte);
-        ptr(byte, &cpu);
+    //do 50 clock cycles
+    for (int i = 0; i < 20; i++) {
+        clock(&cpu);
     }
-
+    printf("%x\n", cpu.status_reg);
+    /*
     setFlag('N', 1, &cpu);
     printf("%x\n", cpu.status_reg);
 
@@ -69,4 +68,5 @@ int main(void) {
 
     setFlag('N', 0, &cpu);
     printf("%x\n", cpu.status_reg);
+    */
 }
