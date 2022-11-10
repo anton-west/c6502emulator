@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "cpu.h"
 #include "opcodes.h"
 
@@ -49,7 +51,10 @@ int clock(Processor *cpu) {
     return cycles;
 }
 
-/* set status register flag
+/*  set status register flag
+    if value is nonzero, flag is set to 1
+    if value is zero, flag is set to 0
+
     return 0 on success,
     nonzero if invalid flag was specified
     
