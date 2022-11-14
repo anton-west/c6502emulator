@@ -111,7 +111,67 @@ int I_INY(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
 int I_JMP(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
 int I_JSR(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
 int I_LDA(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_LDX(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+int I_LDX(uint8_t byte, Processor *cpu, Ir *ir) {
+    switch (byte)
+    {
+    case 0xA2:
+        {
+        ir->opcode_mnemonic="LDX";ir->addr_mode=IMM;ir->bytes=2;ir->cycles=2;
+        uint8_t fetched_byte = fetch(cpu);
+        cpu->x_reg = fetched_byte;
+        setFlag('N', fetched_byte & 0x80, cpu);
+        setFlag('Z', fetched_byte == 0, cpu);
+        }
+        break;
+    case 0xA6:
+        {
+        ir->opcode_mnemonic="LDX";ir->addr_mode=ZEP;ir->bytes=2;ir->cycles=3;
+        uint16_t zp_addr = fetch(cpu);
+        uint8_t fetched_byte = read(cpu, zp_addr & 0x00FF);
+        cpu->x_reg = fetched_byte;
+        setFlag('N', fetched_byte & 0x80, cpu);
+        setFlag('Z', fetched_byte == 0, cpu);
+        }
+        break;
+    case 0xB6:
+        {
+        ir->opcode_mnemonic="LDX";ir->addr_mode=ZEY;ir->bytes=2;ir->cycles=4;
+        uint16_t zp_addr = fetch(cpu);
+        uint8_t fetched_byte = read(cpu, (zp_addr + cpu->y_reg) & 0x00FF);
+        cpu->x_reg = fetched_byte;
+        setFlag('N', fetched_byte & 0x80, cpu);
+        setFlag('Z', fetched_byte == 0, cpu);
+        }
+        break;
+    case 0xAE:
+        {
+        ir->opcode_mnemonic="LDX";ir->addr_mode=ABS;ir->bytes=3;ir->cycles=4;
+        uint16_t l_byte = fetch(cpu);
+        uint16_t h_byte = fetch(cpu);
+        uint8_t fetched_byte = read(cpu, (h_byte << 8) | l_byte);
+        cpu->x_reg = fetched_byte;
+        setFlag('N', fetched_byte & 0x80, cpu);
+        setFlag('Z', fetched_byte == 0, cpu);
+        }
+        break;
+    case 0xBE:
+        {
+        ir->opcode_mnemonic="LDX";ir->addr_mode=ABY;ir->bytes=3;ir->cycles=4;
+        uint16_t l_byte = fetch(cpu);
+        uint16_t h_byte = fetch(cpu);
+        uint16_t addr = ((h_byte << 8) | l_byte) + (uint16_t)cpu->y_reg;
+        if ((addr & 0xFF00) != ((h_byte << 8) & 0xFF00)) {ir->cycles+=1;}
+        uint8_t fetched_byte = read(cpu, addr);
+        cpu->x_reg = fetched_byte;
+        setFlag('N', fetched_byte & 0x80, cpu);
+        setFlag('Z', fetched_byte == 0, cpu);
+        }
+        break;
+    default:
+        return -1;
+    }
+    return 0;
+}
 int I_LDY(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
 int I_LSR(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
 int I_NOP(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
@@ -140,7 +200,7 @@ int I_TYA(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
 
 int U_DEF(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
 
-opcode opcode_matrix[] = {           I_BRK, I_ORA, U_DEF, U_DEF,     U_DEF, I_ORA, I_ASL, U_DEF,     I_PHP, I_ORA, I_ASL, U_DEF,     U_DEF, I_ORA, I_ASL, U_DEF,
+opcode opcode_matrix[] = {          I_BRK, I_ORA, U_DEF, U_DEF,     U_DEF, I_ORA, I_ASL, U_DEF,     I_PHP, I_ORA, I_ASL, U_DEF,     U_DEF, I_ORA, I_ASL, U_DEF,
                                     I_BPL, I_ORA, U_DEF, U_DEF,     U_DEF, I_ORA, I_ASL, U_DEF,     I_CLC, I_ORA, U_DEF, U_DEF,     U_DEF, I_ORA, I_ASL, U_DEF,
                                     I_JSR, I_AND, U_DEF, U_DEF,     I_BIT, I_AND, I_ROL, U_DEF,     I_PLP, I_AND, I_ROL, U_DEF,     I_BIT, I_AND, I_ROL, U_DEF,
                                     I_BMI, I_AND, U_DEF, U_DEF,     U_DEF, I_AND, I_ROL, U_DEF,     I_SEC, I_AND, U_DEF, U_DEF,     U_DEF, I_AND, I_ROL, U_DEF,
