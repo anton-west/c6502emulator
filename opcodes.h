@@ -5,7 +5,7 @@
 
 #include "cpu.h"
 
-typedef enum address_mode {UDF, ACC, ABS, ABX, ABY, IMM, IMP, IND, XIN, INY, REL, ZEP, ZEX, ZEY} address_mode;
+typedef enum address_mode {UDF, ACC, ABS, ABX, ABY, IMM, IMP, IND, IDX, IDY, REL, ZPG, ZPX, ZPY} address_mode;
 
 typedef struct InstructionResult {
     char *opcode_mnemonic;

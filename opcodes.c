@@ -7,8 +7,139 @@
 #include "opcodes.h"
 #include "cpu.h"
 
+uint16_t get_address(address_mode mode, Processor *cpu, Ir *ir) {
+    switch (mode)
+    {
+    case IMM:
+        uint16_t address = cpu->pc + 1;
+        cpu->pc += 2;
+        return address;
+    
+    /*  CANT DO THIS ONE
+    case ACC:
+        cpu->pc += 1;   //TODO: check if this addition should be here or is already handled during instruction fetch
+    */
 
-int I_ADC(uint8_t byte, Processor *cpu, Ir *ir) { ir;}
+    case REL:
+        {
+            uint16_t address = cpu->pc;
+            uint8_t offset = read(cpu, cpu->pc + 1);
+            address += offset + 2;
+            return (uint16_t) address;
+        }
+
+    case ZPG:
+        {
+            uint8_t address = read(cpu, cpu->pc + 1);
+            cpu->pc += 2;
+            return (uint16_t) (address & 0x00FF);
+        }
+
+    case ZPX:
+        {
+            uint16_t address = read(cpu, cpu->pc + 1);
+            address = (address + cpu->x_reg) & 0x00FF;
+            cpu->pc += 2;
+            return address;
+        }
+
+    case ZPY:
+        {
+            uint16_t address = read(cpu, cpu->pc + 1);
+            address = (address + cpu->y_reg) & 0x00FF;
+            cpu->pc += 2;
+            return address;
+        }
+
+    case ABS:
+        {
+            uint16_t addr_low = read(cpu, cpu->pc + 1);
+            uint16_t addr_high = read(cpu, cpu->pc + 2);
+            uint16_t address = addr_low | (addr_high << 8);
+            cpu->pc += 3;
+            return address;
+        }
+
+    case ABX:
+        {
+            uint16_t addr_low = read(cpu, cpu->pc + 1);
+            uint16_t addr_high = read(cpu, cpu->pc + 2);
+            uint16_t temp = addr_low | (addr_high << 8);
+            uint16_t address = temp + cpu->x_reg;
+            if (address & 0xFF00 != temp &0xFF00) {
+                ir->cycles += 1;
+            }
+            cpu->pc += 3;
+            return address;
+        }
+
+    case ABY:
+        {
+            uint16_t addr_low = read(cpu, cpu->pc + 1);
+            uint16_t addr_high = read(cpu, cpu->pc + 2);
+            uint16_t temp = addr_low | (addr_high << 8);
+            uint16_t address = temp + cpu->y_reg;
+            if (address & 0xFF00 != temp &0xFF00) {
+                ir->cycles += 1;
+            }
+            cpu->pc += 3;
+            return address;
+        }
+    
+    case IND:
+        {
+            uint16_t abs_addr_low = read(cpu, cpu->pc + 1);
+            uint16_t abs_addr_high = read(cpu, cpu->pc + 2);
+            uint16_t abs_addr = abs_addr_low + (abs_addr_high << 8);
+
+            uint16_t address, addr_low, addr_high;
+            if ((abs_addr & 0x00FF) == 0x00FF) {
+                addr_low = read(cpu, abs_addr);
+                addr_high = read(cpu, abs_addr & 0xFF00);
+                address = addr_low + (addr_high << 8);
+                //TODO: add 1 to cycles
+                ir->cycles += 1;
+            } else {
+                addr_low = read(cpu, abs_addr);
+                addr_high = read(cpu, abs_addr + 1);
+                address = addr_low + (addr_high << 8);
+            }
+            cpu->pc += 3;
+            return address;
+        }
+
+    case IDX:
+        {
+            uint16_t address = read(cpu, cpu->pc + 1);
+            address += (cpu->x_reg & 0x00FF);
+            uint16_t addr_low = read(cpu, address);
+            uint16_t addr_high = read(cpu, (address + 1) & 0x00FF);
+            address = addr_low + (addr_high << 8);
+            cpu->pc += 2;
+            return address;
+        }
+    
+    case IDY:
+        {
+            uint16_t address = read(cpu, cpu->pc + 1);
+            uint16_t addr_low = read(cpu, address);
+            uint16_t addr_high = read(cpu, (address + 1) & 0x00FF);
+            uint16_t temp = addr_low + (addr_high << 8);
+            uint16_t address = temp + cpu->y_reg;
+            if (address & 0xFF00 != temp &0xFF00) {
+                ir->cycles += 1;
+            }
+            cpu->pc += 2;
+            return address;
+        }
+
+    default:
+        break;
+    }
+}
+
+
+int I_ADC(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
 int I_AND(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
 int I_ASL(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
 int I_BCC(uint8_t byte, Processor *cpu, Ir *ir) { ir; }

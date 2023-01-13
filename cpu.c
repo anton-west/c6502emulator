@@ -42,7 +42,7 @@ int clock(Processor *cpu) {
     printf("acc: %x\n", cpu->acc);
     if (cycles == 0) {
         Ir ir;
-        uint8_t instruction = fetch(cpu);
+        uint8_t instruction = read(cpu, cpu->pc);
         opcode ptr = decode_instruction(instruction);
         (ptr)(instruction, cpu, &ir);
         cycles += ir.cycles;

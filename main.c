@@ -29,7 +29,41 @@ int main(void) {
         clock(&cpu);
     }
     printf("%x\n", cpu.status_reg);
-    /*
+
+    setFlag('N', 1, &cpu);
+    printf("%x\n", cpu.status_reg);
+
+    setFlag('N', 1, &cpu);
+    printf("%x\n", cpu.status_reg);
+
+    setFlag('N', 0, &cpu);
+    printf("%x\n", cpu.status_reg);
+
+    setFlag('N', 0, &cpu);
+    printf("%x\n", cpu.status_reg);
+
+    setFlag('N', 1, &cpu);
+    printf("%x\n", cpu.status_reg);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
     setFlag('N', 1, &cpu);
     printf("%x\n", cpu.status_reg);
 
@@ -68,5 +102,6 @@ int main(void) {
 
     setFlag('N', 0, &cpu);
     printf("%x\n", cpu.status_reg);
-    */
+    
+*/
 }
