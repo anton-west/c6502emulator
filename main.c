@@ -13,38 +13,23 @@ int main(void) {
     memory[1] = 0x0002;
     memory[2] = 0x0001;
     */
-    memory[0] = 0x2C;
-    memory[1] = 0x01;
-    memory[2] = 0x01;
-    memory[0x0101] = 0x00;
+    memory[0] = 0xA9;
+    memory[1] = 0xAA;
+    memory[2] = 0xA9;
+    memory[3] = 0x0F;
 
     Processor cpu;
 
     init_cpu(&cpu);
-    cpu.acc = 0xF1;
+    cpu.acc = 0x00;
     set_memory(&cpu, memory);
 
     //do 50 clock cycles
     for (int i = 0; i < 20; i++) {
         clock(&cpu);
     }
+    printf("%x\n", cpu.acc);
     printf("%x\n", cpu.status_reg);
-
-    setFlag('N', 1, &cpu);
-    printf("%x\n", cpu.status_reg);
-
-    setFlag('N', 1, &cpu);
-    printf("%x\n", cpu.status_reg);
-
-    setFlag('N', 0, &cpu);
-    printf("%x\n", cpu.status_reg);
-
-    setFlag('N', 0, &cpu);
-    printf("%x\n", cpu.status_reg);
-
-    setFlag('N', 1, &cpu);
-    printf("%x\n", cpu.status_reg);
-
 
 
 

@@ -39,11 +39,10 @@ int clock(Processor *cpu) {
     static int cycles = 0;
 
     //if cycle == 0, fetch next instruction at program counter location in memory
-    printf("acc: %x\n", cpu->acc);
     if (cycles == 0) {
         Ir ir;
         uint8_t instruction = read(cpu, cpu->pc);
-        opcode ptr = decode_instruction(instruction);
+        opcode ptr = decode_instruction(instruction); //pc is incremented here by necessary amount
         (ptr)(instruction, cpu, &ir);
         cycles += ir.cycles;
     }

@@ -7,57 +7,59 @@
 #include "opcodes.h"
 #include "cpu.h"
 
-uint16_t get_address(address_mode mode, Processor *cpu, Ir *ir) {
+uint16_t get_target_address(address_mode mode, Processor *cpu, Ir *ir) {
     switch (mode)
     {
     case IMM:
-        uint16_t address = cpu->pc + 1;
-        cpu->pc += 2;
-        return address;
+        {
+            uint16_t trg_addr = cpu->pc + 1;
+            cpu->pc += 2;
+            return trg_addr;
+        }
     
-    /*  CANT DO THIS ONE
     case ACC:
-        cpu->pc += 1;   //TODO: check if this addition should be here or is already handled during instruction fetch
-    */
+        {
+            cpu->pc += 1;   //TODO: check if this addition should be here or is already handled during instruction fetch
+            return 0;   //return 0 but instead operate on cpu accumulator register outside this func
+        }
 
     case REL:
         {
-            uint16_t address = cpu->pc;
             uint8_t offset = read(cpu, cpu->pc + 1);
-            address += offset + 2;
-            return (uint16_t) address;
+            uint16_t trg_addr = cpu->pc + offset + 2;
+            return (uint16_t) trg_addr;
         }
 
     case ZPG:
         {
-            uint8_t address = read(cpu, cpu->pc + 1);
+            uint8_t trg_addr = read(cpu, cpu->pc + 1);
             cpu->pc += 2;
-            return (uint16_t) (address & 0x00FF);
+            return (uint16_t) (trg_addr & 0x00FF);
         }
 
     case ZPX:
         {
-            uint16_t address = read(cpu, cpu->pc + 1);
-            address = (address + cpu->x_reg) & 0x00FF;
+            uint16_t trg_addr = read(cpu, cpu->pc + 1);
+            trg_addr = (trg_addr + cpu->x_reg) & 0x00FF;
             cpu->pc += 2;
-            return address;
+            return trg_addr;
         }
 
     case ZPY:
         {
-            uint16_t address = read(cpu, cpu->pc + 1);
-            address = (address + cpu->y_reg) & 0x00FF;
+            uint16_t trg_addr = read(cpu, cpu->pc + 1);
+            trg_addr = (trg_addr + cpu->y_reg) & 0x00FF;
             cpu->pc += 2;
-            return address;
+            return trg_addr;
         }
 
     case ABS:
         {
             uint16_t addr_low = read(cpu, cpu->pc + 1);
             uint16_t addr_high = read(cpu, cpu->pc + 2);
-            uint16_t address = addr_low | (addr_high << 8);
+            uint16_t trg_addr = addr_low | (addr_high << 8);
             cpu->pc += 3;
-            return address;
+            return trg_addr;
         }
 
     case ABX:
@@ -65,12 +67,12 @@ uint16_t get_address(address_mode mode, Processor *cpu, Ir *ir) {
             uint16_t addr_low = read(cpu, cpu->pc + 1);
             uint16_t addr_high = read(cpu, cpu->pc + 2);
             uint16_t temp = addr_low | (addr_high << 8);
-            uint16_t address = temp + cpu->x_reg;
-            if (address & 0xFF00 != temp &0xFF00) {
+            uint16_t trg_addr = temp + cpu->x_reg;
+            if ((trg_addr & 0xFF00) != (temp & 0xFF00)) {
                 ir->cycles += 1;
             }
             cpu->pc += 3;
-            return address;
+            return trg_addr;
         }
 
     case ABY:
@@ -78,12 +80,12 @@ uint16_t get_address(address_mode mode, Processor *cpu, Ir *ir) {
             uint16_t addr_low = read(cpu, cpu->pc + 1);
             uint16_t addr_high = read(cpu, cpu->pc + 2);
             uint16_t temp = addr_low | (addr_high << 8);
-            uint16_t address = temp + cpu->y_reg;
-            if (address & 0xFF00 != temp &0xFF00) {
+            uint16_t trg_addr = temp + cpu->y_reg;
+            if ((trg_addr & 0xFF00) != (temp & 0xFF00)) {
                 ir->cycles += 1;
             }
             cpu->pc += 3;
-            return address;
+            return trg_addr;
         }
     
     case IND:
@@ -92,45 +94,35 @@ uint16_t get_address(address_mode mode, Processor *cpu, Ir *ir) {
             uint16_t abs_addr_high = read(cpu, cpu->pc + 2);
             uint16_t abs_addr = abs_addr_low + (abs_addr_high << 8);
 
-            uint16_t address, addr_low, addr_high;
-            if ((abs_addr & 0x00FF) == 0x00FF) {
-                addr_low = read(cpu, abs_addr);
-                addr_high = read(cpu, abs_addr & 0xFF00);
-                address = addr_low + (addr_high << 8);
-                //TODO: add 1 to cycles
-                ir->cycles += 1;
-            } else {
-                addr_low = read(cpu, abs_addr);
-                addr_high = read(cpu, abs_addr + 1);
-                address = addr_low + (addr_high << 8);
-            }
+            uint16_t addr_low = read(cpu, abs_addr);
+            uint16_t addr_high = read(cpu, abs_addr + 1);
+            uint16_t trg_addr = addr_low + (addr_high << 8);
             cpu->pc += 3;
-            return address;
+            return trg_addr;
         }
 
     case IDX:
         {
-            uint16_t address = read(cpu, cpu->pc + 1);
-            address += (cpu->x_reg & 0x00FF);
-            uint16_t addr_low = read(cpu, address);
-            uint16_t addr_high = read(cpu, (address + 1) & 0x00FF);
-            address = addr_low + (addr_high << 8);
+            uint16_t addr = read(cpu, cpu->pc + 1) + (cpu->x_reg & 0x00FF);
+            uint16_t addr_low = read(cpu, addr);
+            uint16_t addr_high = read(cpu, (addr + 1) & 0x00FF);    //stay on zero page
+            uint16_t trg_addr = addr_low + (addr_high << 8);
             cpu->pc += 2;
-            return address;
+            return trg_addr;
         }
     
     case IDY:
         {
-            uint16_t address = read(cpu, cpu->pc + 1);
-            uint16_t addr_low = read(cpu, address);
-            uint16_t addr_high = read(cpu, (address + 1) & 0x00FF);
+            uint16_t addr = read(cpu, cpu->pc + 1);
+            uint16_t addr_low = read(cpu, addr);
+            uint16_t addr_high = read(cpu, (addr + 1) & 0x00FF);
             uint16_t temp = addr_low + (addr_high << 8);
-            uint16_t address = temp + cpu->y_reg;
-            if (address & 0xFF00 != temp &0xFF00) {
+            uint16_t trg_addr = temp + cpu->y_reg;
+            if ((trg_addr & 0xFF00) != (temp & 0xFF00)) {
                 ir->cycles += 1;
             }
             cpu->pc += 2;
-            return address;
+            return trg_addr;
         }
 
     default:
@@ -168,7 +160,93 @@ int I_INX(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
 int I_INY(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
 int I_JMP(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
 int I_JSR(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_LDA(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+int I_LDA(uint8_t byte, Processor *cpu, Ir *ir) { 
+    switch (byte)
+    {
+    case 0xA9:
+        {
+            ir->opcode_mnemonic="LDA";  ir->addr_mode=IMM; ir->bytes=2; ir->cycles=2;
+            uint16_t trg_addr = get_target_address(IMM, cpu, ir);
+            uint8_t trg_byte = read(cpu, trg_addr);
+            cpu->acc = trg_byte;
+            setFlag('N', trg_byte & 0x80, cpu);
+            setFlag('Z', trg_byte == 0, cpu);
+        }
+        break;
+    case 0xA5:
+        {
+            ir->opcode_mnemonic="LDA";  ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=3;
+            uint16_t trg_addr = get_target_address(ZPG, cpu, ir);
+            uint8_t trg_byte = read(cpu, trg_addr);
+            cpu->acc = trg_byte;
+            setFlag('N', trg_byte & 0x80, cpu);
+            setFlag('Z', trg_byte == 0, cpu);
+        }
+        break;
+    case 0xB5:
+        {
+            ir->opcode_mnemonic="LDA";  ir->addr_mode=ZPX; ir->bytes=2; ir->cycles=4;
+            uint16_t trg_addr = get_target_address(ZPX, cpu, ir);
+            uint8_t trg_byte = read(cpu, trg_addr);
+            cpu->acc = trg_byte;
+            setFlag('N', trg_byte & 0x80, cpu);
+            setFlag('Z', trg_byte == 0, cpu);
+        }
+        break;
+    case 0xAD:
+        {
+            ir->opcode_mnemonic="LDA";  ir->addr_mode=ABS; ir->bytes=3; ir->cycles=4;
+            uint16_t trg_addr = get_target_address(ABS, cpu, ir);
+            uint8_t trg_byte = read(cpu, trg_addr);
+            cpu->acc = trg_byte;
+            setFlag('N', trg_byte & 0x80, cpu);
+            setFlag('Z', trg_byte == 0, cpu);
+        }
+        break;
+    case 0xBD:
+        {
+            ir->opcode_mnemonic="LDA";  ir->addr_mode=ABX; ir->bytes=3; ir->cycles=4;
+            uint16_t trg_addr = get_target_address(ABX, cpu, ir);
+            uint8_t trg_byte = read(cpu, trg_addr);
+            cpu->acc = trg_byte;
+            setFlag('N', trg_byte & 0x80, cpu);
+            setFlag('Z', trg_byte == 0, cpu);
+        }
+        break;
+    case 0xB9:
+        {
+            ir->opcode_mnemonic="LDA";  ir->addr_mode=ABY; ir->bytes=3; ir->cycles=4;
+            uint16_t trg_addr = get_target_address(ABY, cpu, ir);
+            uint8_t trg_byte = read(cpu, trg_addr);
+            cpu->acc = trg_byte;
+            setFlag('N', trg_byte & 0x80, cpu);
+            setFlag('Z', trg_byte == 0, cpu);
+        }
+        break;
+    case 0xA1:
+        {
+            ir->opcode_mnemonic="LDA";  ir->addr_mode=IDX; ir->bytes=2; ir->cycles=6;
+            uint16_t trg_addr = get_target_address(IDX, cpu, ir);
+            uint8_t trg_byte = read(cpu, trg_addr);
+            cpu->acc = trg_byte;
+            setFlag('N', trg_byte & 0x80, cpu);
+            setFlag('Z', trg_byte == 0, cpu);
+        }
+        break;
+    case 0xB1:
+        {
+            ir->opcode_mnemonic="LDA";  ir->addr_mode=IDY; ir->bytes=2; ir->cycles=6;
+            uint16_t trg_addr = get_target_address(IDY, cpu, ir);
+            uint8_t trg_byte = read(cpu, trg_addr);
+            cpu->acc = trg_byte;
+            setFlag('N', trg_byte & 0x80, cpu);
+            setFlag('Z', trg_byte == 0, cpu);
+        }
+        break;
+    default:
+        break;
+    }
+ }
 int I_LDX(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
 int I_LDY(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
 int I_LSR(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
