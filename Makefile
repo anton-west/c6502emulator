@@ -1,20 +1,39 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -pedantic
+CFLAGS=-g -Wall -Wextra -pedantic
+LDFLAGS=-lcmocka
 
-objects = main.o cpu.o opcodes.o
+BINDIR=bin
+BIN=$(BINDIR)/c6502
+SRC=src
+OBJ=obj
 
-all: c6502
-	./c6502
+SRCS=$(wildcard $(SRC)/*.c)
+OBJS=$(patsubst $(SRC)/*.c, $(OBJ)/*.o, $(SRCS))
 
-c6502: $(objects)
-	cc -o c6502 $(objects)
+TEST=tests
+TESTS=$(wildcard $(TEST)/*.c)
+#TESTBINS=$(patsubst $(TEST)/*.c, $(TEST)/bin/%, $(TESTS))
 
-main.o: cpu.h
+all:$(BIN)
+	./$(BIN)
 
-cpu.o: cpu.h opcodes.h
+release: CFLAGS=-Wall -O3 -DNDEBUG
+release: clean
+release: $(BIN)
 
-opcodes.o: cpu.h opcodes.h
+$(BIN): $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) -o $@
+
+$(OBJ)/%.o: $(SRC)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+
+test: /tests/bin/testprog
+	./tests/bin/testprog
+
+/tests/bin/testprog: $(TESTS)
+	$(CC) $(CFLAGS) $(TESTS) -o tests/bin/testprog $(LDFLAGS)
 
 .PHONY: clean
 clean:
-	rm -f *.o c6502
+	rm -f $(BINDIR)/* $(OBJ)/*

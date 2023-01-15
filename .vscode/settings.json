@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "stdio.h": "c",
-        "cpu.h": "c"
+        "cpu.h": "c",
+        "setjmp.h": "c"
     }
 }
