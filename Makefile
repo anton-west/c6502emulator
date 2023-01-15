@@ -13,6 +13,8 @@ OBJS=$(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SRCS))
 TEST=tests
 TESTBIN=$(TEST)/bin/testprog
 TESTS=$(wildcard $(TEST)/*.c)
+TESTS+=$(wildcard $(SRC)/*.c)
+TESTS:=$(filter-out src/main.c, $(TESTS))
 #TESTBINS=$(patsubst $(TEST)/*.c, $(TEST)/bin/%, $(TESTS))
 
 all:$(BIN)
