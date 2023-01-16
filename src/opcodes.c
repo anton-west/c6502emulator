@@ -103,7 +103,7 @@ uint16_t get_target_address(address_mode mode, Processor *cpu, Ir *ir) {
 
     case IDX:
         {
-            uint16_t addr = read(cpu, cpu->pc + 1) + (cpu->x_reg & 0x00FF);
+            uint16_t addr = (read(cpu, cpu->pc + 1) + cpu->x_reg) & 0x00FF;
             uint16_t addr_low = read(cpu, addr);
             uint16_t addr_high = read(cpu, (addr + 1) & 0x00FF);    //stay on zero page
             uint16_t trg_addr = addr_low + (addr_high << 8);
