@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-g -Wall -Wextra -pedantic -std=c99
+CFLAGS=-g -Wall -Wextra -pedantic -std=c99 -I/opt/homebrew/include -L/opt/homebrew/lib
 LDFLAGS=-lcmocka
 
 BINDIR=bin/debug
@@ -10,6 +10,7 @@ OBJ=obj
 SRCS=$(wildcard $(SRC)/*.c)
 OBJS=$(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SRCS))
 
+# Setup testing
 TEST=tests
 TESTBIN=$(TEST)/bin/testprog
 TESTS=$(wildcard $(TEST)/*.c)

@@ -24,7 +24,7 @@ static void lda(void **state) {
     init_cpu(&cpu);
     set_memory(&cpu, memory);
     
-    //clock(&cpu);
+    clock(&cpu);
 
     assert_int_equal(cpu.acc, 0xAA);
 }
