@@ -126,7 +126,7 @@ uint16_t get_target_address(address_mode mode, Processor *cpu, Ir *ir) {
         }
 
     default:
-        break;
+        return 0;
     }
 }
 
@@ -160,92 +160,50 @@ int I_INX(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
 int I_INY(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
 int I_JMP(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
 int I_JSR(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_LDA(uint8_t byte, Processor *cpu, Ir *ir) { 
+int I_LDA(uint8_t byte, Processor *cpu, Ir *ir) {
+    uint16_t trg_addr;
+    ir->opcode_mnemonic="LDA";  
     switch (byte)
     {
     case 0xA9:
-        {
-            ir->opcode_mnemonic="LDA";  ir->addr_mode=IMM; ir->bytes=2; ir->cycles=2;
-            uint16_t trg_addr = get_target_address(IMM, cpu, ir);
-            uint8_t trg_byte = read(cpu, trg_addr);
-            cpu->acc = trg_byte;
-            setFlag('N', trg_byte & 0x80, cpu);
-            setFlag('Z', trg_byte == 0, cpu);
-        }
+        ir->addr_mode=IMM; ir->bytes=2; ir->cycles=2;
+        trg_addr = get_target_address(IMM, cpu, ir);
         break;
     case 0xA5:
-        {
-            ir->opcode_mnemonic="LDA";  ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=3;
-            uint16_t trg_addr = get_target_address(ZPG, cpu, ir);
-            uint8_t trg_byte = read(cpu, trg_addr);
-            cpu->acc = trg_byte;
-            setFlag('N', trg_byte & 0x80, cpu);
-            setFlag('Z', trg_byte == 0, cpu);
-        }
+        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=3;
+        trg_addr = get_target_address(ZPG, cpu, ir);
         break;
     case 0xB5:
-        {
-            ir->opcode_mnemonic="LDA";  ir->addr_mode=ZPX; ir->bytes=2; ir->cycles=4;
-            uint16_t trg_addr = get_target_address(ZPX, cpu, ir);
-            uint8_t trg_byte = read(cpu, trg_addr);
-            cpu->acc = trg_byte;
-            setFlag('N', trg_byte & 0x80, cpu);
-            setFlag('Z', trg_byte == 0, cpu);
-        }
+        ir->addr_mode=ZPX; ir->bytes=2; ir->cycles=4;
+        trg_addr = get_target_address(ZPX, cpu, ir);
         break;
     case 0xAD:
-        {
-            ir->opcode_mnemonic="LDA";  ir->addr_mode=ABS; ir->bytes=3; ir->cycles=4;
-            uint16_t trg_addr = get_target_address(ABS, cpu, ir);
-            uint8_t trg_byte = read(cpu, trg_addr);
-            cpu->acc = trg_byte;
-            setFlag('N', trg_byte & 0x80, cpu);
-            setFlag('Z', trg_byte == 0, cpu);
-        }
+        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=4;
+        trg_addr = get_target_address(ABS, cpu, ir);
         break;
     case 0xBD:
-        {
-            ir->opcode_mnemonic="LDA";  ir->addr_mode=ABX; ir->bytes=3; ir->cycles=4;
-            uint16_t trg_addr = get_target_address(ABX, cpu, ir);
-            uint8_t trg_byte = read(cpu, trg_addr);
-            cpu->acc = trg_byte;
-            setFlag('N', trg_byte & 0x80, cpu);
-            setFlag('Z', trg_byte == 0, cpu);
-        }
+        ir->addr_mode=ABX; ir->bytes=3; ir->cycles=4;
+        trg_addr = get_target_address(ABX, cpu, ir);
         break;
     case 0xB9:
-        {
-            ir->opcode_mnemonic="LDA";  ir->addr_mode=ABY; ir->bytes=3; ir->cycles=4;
-            uint16_t trg_addr = get_target_address(ABY, cpu, ir);
-            uint8_t trg_byte = read(cpu, trg_addr);
-            cpu->acc = trg_byte;
-            setFlag('N', trg_byte & 0x80, cpu);
-            setFlag('Z', trg_byte == 0, cpu);
-        }
+        ir->addr_mode=ABY; ir->bytes=3; ir->cycles=4;
+        trg_addr = get_target_address(ABY, cpu, ir);
         break;
     case 0xA1:
-        {
-            ir->opcode_mnemonic="LDA";  ir->addr_mode=IDX; ir->bytes=2; ir->cycles=6;
-            uint16_t trg_addr = get_target_address(IDX, cpu, ir);
-            uint8_t trg_byte = read(cpu, trg_addr);
-            cpu->acc = trg_byte;
-            setFlag('N', trg_byte & 0x80, cpu);
-            setFlag('Z', trg_byte == 0, cpu);
-        }
+        ir->addr_mode=IDX; ir->bytes=2; ir->cycles=6;
+        trg_addr = get_target_address(IDX, cpu, ir);
         break;
     case 0xB1:
-        {
-            ir->opcode_mnemonic="LDA";  ir->addr_mode=IDY; ir->bytes=2; ir->cycles=6;
-            uint16_t trg_addr = get_target_address(IDY, cpu, ir);
-            uint8_t trg_byte = read(cpu, trg_addr);
-            cpu->acc = trg_byte;
-            setFlag('N', trg_byte & 0x80, cpu);
-            setFlag('Z', trg_byte == 0, cpu);
-        }
+        ir->addr_mode=IDY; ir->bytes=2; ir->cycles=6;
+        trg_addr = get_target_address(IDY, cpu, ir);
         break;
     default:
         break;
     }
+    uint8_t trg_byte = read(cpu, trg_addr);
+    cpu->acc = trg_byte;
+    setFlag('N', trg_byte & 0x80, cpu);
+    setFlag('Z', trg_byte == 0, cpu);
  }
 int I_LDX(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
 int I_LDY(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
