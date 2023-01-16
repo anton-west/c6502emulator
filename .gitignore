@@ -1,4 +1,4 @@
 *.o
 c6502
-tests/bin
+tests/bin/*
 .vscode
