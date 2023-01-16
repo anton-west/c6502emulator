@@ -194,7 +194,7 @@ int I_LDA(uint8_t byte, Processor *cpu, Ir *ir) {
         trg_addr = get_target_address(IDX, cpu, ir);
         break;
     case 0xB1:
-        ir->addr_mode=IDY; ir->bytes=2; ir->cycles=6;
+        ir->addr_mode=IDY; ir->bytes=2; ir->cycles=5;
         trg_addr = get_target_address(IDY, cpu, ir);
         break;
     default:
