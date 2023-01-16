@@ -18,8 +18,8 @@ static void get_target_address_IMM_1(void **state) {
     (void) state;
 
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
-    Processor cpu;
-    Ir ir;
+    Processor cpu = {0};
+    Ir ir= {0};
     
     init_cpu(&cpu);
     set_memory(&cpu, memory);
@@ -36,8 +36,8 @@ static void get_target_address_IMM_2(void **state) {
     (void) state;
 
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
-    Processor cpu;
-    Ir ir;
+    Processor cpu = {0};
+    Ir ir= {0};
     
     init_cpu(&cpu);
     set_memory(&cpu, memory);
@@ -55,8 +55,8 @@ static void get_target_address_IMM_3(void **state) {
     (void) state;
 
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
-    Processor cpu;
-    Ir ir;
+    Processor cpu = {0};
+    Ir ir= {0};
     
     init_cpu(&cpu);
     set_memory(&cpu, memory);
@@ -74,8 +74,8 @@ static void get_target_address_ACC(void **state) {
     (void) state;
 
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
-    Processor cpu;
-    Ir ir;
+    Processor cpu = {0};
+    Ir ir= {0};
     
     init_cpu(&cpu);
     set_memory(&cpu, memory);
@@ -92,8 +92,8 @@ static void get_target_address_REL_1(void **state) {
     (void) state;
 
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
-    Processor cpu;
-    Ir ir;
+    Processor cpu = {0};
+    Ir ir= {0};
 
     memory[1] = 69;
 
@@ -114,8 +114,8 @@ static void get_target_address_REL_2(void **state) {
     (void) state;
 
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
-    Processor cpu;
-    Ir ir;
+    Processor cpu = {0};
+    Ir ir= {0};
 
     memory[0x0100] = 0x33;
 
@@ -136,8 +136,8 @@ static void get_target_address_ZPG_1(void **state) {
     (void) state;
 
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
-    Processor cpu;
-    Ir ir;
+    Processor cpu = {0};
+    Ir ir= {0};
 
     memory[1] = 50;
 
@@ -156,8 +156,8 @@ static void get_target_address_ZPG_2(void **state) {
     (void) state;
 
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
-    Processor cpu;
-    Ir ir;
+    Processor cpu = {0};
+    Ir ir= {0};
 
     memory[1] = 0xFF;
 
@@ -177,8 +177,8 @@ static void get_target_address_ZPX_1(void **state) {
     (void) state;
 
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
-    Processor cpu;
-    Ir ir;
+    Processor cpu = {0};
+    Ir ir= {0};
 
     memory[1] = 10;
 
@@ -200,8 +200,8 @@ static void get_target_address_ZPX_2(void **state) {
     (void) state;
 
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
-    Processor cpu;
-    Ir ir;
+    Processor cpu = {0};
+    Ir ir= {0};
 
     memory[1] = 0xFF;
 
@@ -223,8 +223,8 @@ static void get_target_address_ZPY_1(void **state) {
     (void) state;
 
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
-    Processor cpu;
-    Ir ir;
+    Processor cpu = {0};
+    Ir ir= {0};
 
     memory[1] = 10;
 
@@ -246,8 +246,8 @@ static void get_target_address_ZPY_2(void **state) {
     (void) state;
 
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
-    Processor cpu;
-    Ir ir;
+    Processor cpu = {0};
+    Ir ir= {0};
 
     memory[1] = 0xFF;
 
@@ -269,8 +269,8 @@ static void get_target_address_ABS(void **state) {
     (void) state;
 
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
-    Processor cpu;
-    Ir ir;
+    Processor cpu = {0};
+    Ir ir= {0};
 
     memory[1] = 0x22;   //low byte
     memory[2] = 0x33;   //high byte
@@ -290,8 +290,8 @@ static void get_target_address_ABX_1(void **state) {
     (void) state;
 
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
-    Processor cpu;
-    Ir ir;
+    Processor cpu = {0};
+    Ir ir= {0};
 
     memory[1] = 0x22;   //low byte
     memory[2] = 0x33;   //high byte
@@ -314,8 +314,8 @@ static void get_target_address_ABX_2(void **state) {
     (void) state;
 
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
-    Processor cpu;
-    Ir ir;
+    Processor cpu = {0};
+    Ir ir= {0};
 
     memory[1] = 0x22;   //low byte
     memory[2] = 0x33;   //high byte
@@ -338,8 +338,8 @@ static void get_target_address_ABX_3(void **state) {
     (void) state;
 
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
-    Processor cpu;
-    Ir ir;
+    Processor cpu = {0};
+    Ir ir= {0};
 
     memory[1] = 0xFF;   //low byte
     memory[2] = 0x33;   //high byte
@@ -362,8 +362,8 @@ static void get_target_address_ABY_1(void **state) {
     (void) state;
 
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
-    Processor cpu;
-    Ir ir = {0};
+    Processor cpu = {0};
+    Ir ir= {0};
 
     memory[1] = 0x22;   //low byte
     memory[2] = 0x33;   //high byte
@@ -385,8 +385,8 @@ static void get_target_address_ABY_2(void **state) {
     (void) state;
 
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
-    Processor cpu;
-    Ir ir = {0};
+    Processor cpu = {0};
+    Ir ir= {0};
 
     memory[1] = 0x22;   //low byte
     memory[2] = 0x33;   //high byte
@@ -409,8 +409,8 @@ static void get_target_address_ABY_3(void **state) {
     (void) state;
 
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
-    Processor cpu;
-    Ir ir = {0};
+    Processor cpu = {0};
+    Ir ir= {0};
 
     memory[1] = 0xFF;   //low byte
     memory[2] = 0x33;   //high byte
@@ -433,8 +433,8 @@ static void get_target_address_IND(void **state) {
     (void) state;
 
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
-    Processor cpu;
-    Ir ir;
+    Processor cpu = {0};
+    Ir ir= {0};
 
     memory[1] = 0x22;   //low byte
     memory[2] = 0x33;   //high byte
@@ -510,6 +510,7 @@ static void get_target_address_IDY_1(void **state) {
     uint16_t trg_addr = get_target_address(IDY, &cpu, &ir);
     assert_int_equal(cpu.pc, 2);
     assert_int_equal(trg_addr, 0xBBAA + 0x35);
+    assert_int_equal(ir.cycles, 0);
 }
 
 static void get_target_address_IDY_2(void **state) {
@@ -530,31 +531,408 @@ static void get_target_address_IDY_2(void **state) {
     uint16_t trg_addr = get_target_address(IDY, &cpu, &ir);
     assert_int_equal(cpu.pc, 2);
     assert_int_equal(trg_addr, 0xBBAA + 0x35);
+    assert_int_equal(ir.cycles, 0);
 }
 
-/*
-static void lda(void **state) {
+static void get_target_address_IDY_3(void **state) {
+    (void) state;
+
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
+    Processor cpu = {0};
+    Ir ir = {0};
+
+    memory[1] = 0xFF;   //read zero page address
+    memory[0xFF] = 0xFF;
+    memory[0x00] = 0xBB;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.y_reg = 0x35;
+    assert_int_equal(cpu.pc, 0); 
+    uint16_t trg_addr = get_target_address(IDY, &cpu, &ir);
+    assert_int_equal(cpu.pc, 2);
+    assert_int_equal(trg_addr, 0xBBFF + 0x35);
+    assert_int_equal(ir.cycles, 1);
+}
+
+// LDA TESTS
+
+static void LDA_IMM_1(void **state) {
     (void) state;
 
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
     memory[0] = 0xA9;
     memory[1] = 0xAA;
 
-    Processor cpu;
+    Processor cpu = {0};
     
     init_cpu(&cpu);
     set_memory(&cpu, memory);
-    
+
+    assert_int_equal(cpu.status_reg, 0);
+
     clock(&cpu);
 
     assert_int_equal(cpu.acc, 0xAA);
+    assert_int_equal(getFlag('N',&cpu), 1);
 }
-*/
+
+static void LDA_IMM_2(void **state) {
+    (void) state;
+
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
+    memory[0] = 0xA9;
+    memory[1] = 0x00;
+
+    Processor cpu = {0};
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.acc = 0xFF;
+
+    assert_int_equal(cpu.status_reg, 0);
+    
+    clock(&cpu);
+
+    assert_int_equal(cpu.acc, 0x00);
+    assert_int_equal(getFlag('Z',&cpu), 1);
+}
+
+
+static void LDA_ZEP_1(void **state) {
+    (void) state;
+
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
+    memory[0] = 0xA5;
+    memory[1] = 0x55;
+    memory[0x55] = 0xF0;
+
+    Processor cpu = {0};;
+    
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    assert_int_equal(cpu.status_reg, 0);
+
+    clock(&cpu);
+
+    assert_int_equal(cpu.acc, 0xF0);
+    assert_int_equal(getFlag('N',&cpu), 1);
+}
+
+static void LDA_ZEP_2(void **state) {
+    (void) state;
+
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
+    memory[0] = 0xA5;
+    memory[1] = 0x55;
+    memory[0x55] = 0x00;
+
+    Processor cpu = {0};;
+    
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.acc = 0xFF;
+
+    assert_int_equal(cpu.status_reg, 0);
+
+    clock(&cpu);
+
+    assert_int_equal(cpu.acc, 0x00);
+    assert_int_equal(getFlag('Z',&cpu), 1);
+}
+
+static void LDA_ZPX_1(void **state) {
+    (void) state;
+
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
+    memory[0] = 0xB5;
+    memory[1] = 0x55;
+    memory[0x55 + 10] = 0xF0;
+
+    Processor cpu = {0};;
+    
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.x_reg = 10;
+
+    assert_int_equal(cpu.status_reg, 0);
+
+    clock(&cpu);
+
+    assert_int_equal(cpu.acc, 0xF0);
+    assert_int_equal(getFlag('N',&cpu), 1);
+}
+
+static void LDA_ZPX_2(void **state) {
+    (void) state;
+
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
+    memory[0] = 0xB5;
+    memory[1] = 0xFF;
+    memory[(0xFF + 10) & 0x00FF] = 0xF0;
+
+    Processor cpu = {0};;
+    
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.x_reg = 10;
+
+    assert_int_equal(cpu.status_reg, 0);
+
+    clock(&cpu);
+
+    assert_int_equal(cpu.acc, 0xF0);
+    assert_int_equal(getFlag('N',&cpu), 1);
+}
+
+static void LDA_ABS_1(void **state) {
+    (void) state;
+
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
+    memory[0] = 0xAD;
+    memory[1] = 0x55;
+    memory[2] = 0xBB;
+    memory[0xBB55] = 0xF0;
+
+    Processor cpu = {0};;
+    
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    assert_int_equal(cpu.status_reg, 0);
+
+    clock(&cpu);
+
+    assert_int_equal(cpu.acc, 0xF0);
+    assert_int_equal(getFlag('N',&cpu), 1);
+}
+
+static void LDA_ABS_2(void **state) {
+    (void) state;
+
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
+    memory[0] = 0xAD;
+    memory[1] = 0xFF;
+    memory[2] = 0xFF;
+    memory[0xFFFF] = 0xF0;
+
+    Processor cpu = {0};;
+    
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    assert_int_equal(cpu.status_reg, 0);
+
+    clock(&cpu);
+
+    assert_int_equal(cpu.acc, 0xF0);
+    assert_int_equal(getFlag('N',&cpu), 1);
+}
+
+static void LDA_ABX_1(void **state) {
+    (void) state;
+
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
+    memory[0] = 0xBD;
+    memory[1] = 0x55;
+    memory[2] = 0xBB;
+    memory[0xBB55 + 10] = 0xF0;
+
+    Processor cpu = {0};;
+    
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.x_reg = 10;
+
+    assert_int_equal(cpu.status_reg, 0);
+
+    clock(&cpu);
+
+    assert_int_equal(cpu.acc, 0xF0);
+    assert_int_equal(getFlag('N',&cpu), 1);
+}
+
+static void LDA_ABX_2(void **state) {
+    (void) state;
+
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
+    memory[0] = 0xAD;
+    memory[1] = 0xFF;
+    memory[2] = 0xFF;
+    memory[0xFFFF] = 0xF0;
+
+    Processor cpu = {0};;
+    
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.x_reg = 10;
+
+    assert_int_equal(cpu.status_reg, 0);
+
+    clock(&cpu);
+
+    assert_int_equal(cpu.acc, 0xF0);
+    assert_int_equal(getFlag('N',&cpu), 1);
+}
+
+static void LDA_ABY_1(void **state) {
+    (void) state;
+
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
+    memory[0] = 0xB9;
+    memory[1] = 0x55;
+    memory[2] = 0xBB;
+    memory[0xBB55 + 10] = 0xF0;
+
+    Processor cpu = {0};;
+    
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.y_reg = 10;
+
+    assert_int_equal(cpu.status_reg, 0);
+
+    clock(&cpu);
+
+    assert_int_equal(cpu.acc, 0xF0);
+    assert_int_equal(getFlag('N',&cpu), 1);
+}
+
+static void LDA_ABY_2(void **state) {
+    (void) state;
+
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
+    memory[0] = 0xB9;
+    memory[1] = 0xFF;
+    memory[2] = 0x55;
+    memory[0x55FF+10] = 0xF0;
+
+    Processor cpu = {0};;
+    
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.y_reg = 10;
+
+    assert_int_equal(cpu.status_reg, 0);
+
+    clock(&cpu);
+
+    assert_int_equal(cpu.acc, 0xF0);
+    assert_int_equal(getFlag('N',&cpu), 1);
+}
+
+static void LDA_IDX_1(void **state) {
+    (void) state;
+
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
+    memory[0] = 0xA1;
+    memory[1] = 0x50;
+    memory[0x50+10] = 0xBB;
+    memory[0x51+10] = 0xAA;
+    memory[0xAABB] = 0xF0;
+    Processor cpu = {0};
+    
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.x_reg = 10;
+
+    assert_int_equal(cpu.status_reg, 0);
+
+    clock(&cpu);
+
+    assert_int_equal(cpu.acc, 0xF0);
+    assert_int_equal(getFlag('N',&cpu), 1);
+}
+
+static void LDA_IDX_2(void **state) {
+    (void) state;
+
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
+    memory[0] = 0xA1;
+    memory[1] = 0xFF;
+    memory[(0xFF+10) & 0x00FF] = 0xBB;
+    memory[(0xFF+10 + 1) & 0x00FF] = 0xAA;
+    memory[0xAABB] = 0xF0;
+    Processor cpu = {0};
+    
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.x_reg = 10;
+
+    assert_int_equal(cpu.status_reg, 0);
+
+    clock(&cpu);
+
+    assert_int_equal(cpu.acc, 0xF0);
+    assert_int_equal(getFlag('N',&cpu), 1);
+}
+
+static void LDA_IDY_1(void **state) {
+    (void) state;
+
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
+    memory[0] = 0xB1;
+    memory[1] = 0x55;
+    memory[0x55] = 0x60;
+    memory[0x56] = 0xAA;
+    memory[0xAA60 + 10] = 0xF1;
+
+
+    Processor cpu = {0};
+    
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.y_reg = 10;
+
+    assert_int_equal(cpu.status_reg, 0);
+
+    clock(&cpu);
+
+    assert_int_equal(cpu.acc, 0xF1);
+    assert_int_equal(getFlag('N',&cpu), 1);
+}
+
+static void LDA_IDY_2(void **state) {
+    (void) state;
+
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
+    memory[5] = 0xB1;
+    memory[6] = 0xFF;
+    memory[0xFF] = 0x60;
+    memory[0x00] = 0xAA;
+    memory[0xAA60 + 10] = 0xF1;
+
+    Processor cpu = {0};
+    
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.pc = 5;
+    cpu.y_reg = 10;
+
+    assert_int_equal(cpu.status_reg, 0);
+
+    clock(&cpu);
+
+    assert_int_equal(cpu.acc, 0xF1);
+    assert_int_equal(getFlag('N',&cpu), 1);
+}
 
 int main(void) {
     
     const struct CMUnitTest tests[] = {
-        //cmocka_unit_test(null_test_success),
+        //get_target_address() tests
         cmocka_unit_test(get_target_address_IMM_1),
         cmocka_unit_test(get_target_address_IMM_2),
         cmocka_unit_test(get_target_address_IMM_3),
@@ -579,6 +957,27 @@ int main(void) {
         cmocka_unit_test(get_target_address_IDX_2),
         cmocka_unit_test(get_target_address_IDY_1),
         cmocka_unit_test(get_target_address_IDY_2),
+        cmocka_unit_test(get_target_address_IDY_3),
+
+        //LDA tests
+        cmocka_unit_test(LDA_IMM_1),
+        cmocka_unit_test(LDA_IMM_2),
+        cmocka_unit_test(LDA_ZEP_1),
+        cmocka_unit_test(LDA_ZEP_2),
+        cmocka_unit_test(LDA_ZPX_1),
+        cmocka_unit_test(LDA_ZPX_2),
+        cmocka_unit_test(LDA_ABS_1),
+        cmocka_unit_test(LDA_ABS_2),
+        cmocka_unit_test(LDA_ABX_1),
+        cmocka_unit_test(LDA_ABX_2),
+        cmocka_unit_test(LDA_ABY_1),
+        cmocka_unit_test(LDA_ABY_2),
+        cmocka_unit_test(LDA_IDX_1),
+        cmocka_unit_test(LDA_IDX_2),
+        cmocka_unit_test(LDA_IDY_1),
+        cmocka_unit_test(LDA_IDY_2),
+
+
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
     

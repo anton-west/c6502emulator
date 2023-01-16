@@ -12,6 +12,8 @@ void init_cpu(Processor* cpu) {
     cpu->y_reg=0;
 
     cpu->acc=0;
+
+    cpu->cycles=0;
 }
 
 void set_memory(Processor *cpu, uint8_t *memory) {
@@ -36,18 +38,17 @@ uint8_t fetch(Processor *cpu) {
 }
 
 int clock(Processor *cpu) {
-    static int cycles = 0;
 
     //if cycle == 0, fetch next instruction at program counter location in memory
-    if (cycles == 0) {
-        Ir ir;
+    if (cpu->cycles == 0) {
+        Ir ir = {0};
         uint8_t instruction = read(cpu, cpu->pc);
         opcode ptr = decode_instruction(instruction); //pc is incremented here by necessary amount
         (ptr)(instruction, cpu, &ir);
-        cycles += ir.cycles;
+        cpu->cycles += ir.cycles;
     }
-    cycles --;
-    return cycles;
+    cpu->cycles --;
+    return cpu->cycles;
 }
 
 /*  set status register flag

@@ -28,6 +28,8 @@ typedef struct Processor {
     uint8_t acc;
 
     uint8_t *memory;
+
+    unsigned int cycles;
 } Processor;
 
 void init_cpu(Processor *cpu);

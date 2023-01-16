@@ -69,7 +69,7 @@ uint16_t get_target_address(address_mode mode, Processor *cpu, Ir *ir) {
             uint16_t temp = addr_low | (addr_high << 8);
             uint16_t trg_addr = temp + cpu->x_reg;
             if ((trg_addr & 0xFF00) != (temp & 0xFF00)) {
-                ir->cycles += 1;
+                ir->cycles += 1;    //extra cycle
             }
             cpu->pc += 3;
             return trg_addr;
@@ -82,7 +82,7 @@ uint16_t get_target_address(address_mode mode, Processor *cpu, Ir *ir) {
             uint16_t temp = addr_low | (addr_high << 8);
             uint16_t trg_addr = temp + cpu->y_reg;
             if ((trg_addr & 0xFF00) != (temp & 0xFF00)) {
-                ir->cycles += 1;
+                ir->cycles += 1;    //extra cycle
             }
             cpu->pc += 3;
             return trg_addr;
@@ -119,7 +119,7 @@ uint16_t get_target_address(address_mode mode, Processor *cpu, Ir *ir) {
             uint16_t temp = addr_low + (addr_high << 8);
             uint16_t trg_addr = temp + cpu->y_reg;
             if ((trg_addr & 0xFF00) != (temp & 0xFF00)) {
-                ir->cycles += 1;
+                ir->cycles += 1;    //extra cycle
             }
             cpu->pc += 2;
             return trg_addr;
