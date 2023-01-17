@@ -117,7 +117,7 @@ static void get_target_address_REL_2(void **state) {
     Processor cpu = {0};
     Ir ir= {0};
 
-    memory[0x0100] = 0x33;
+    memory[0x0100] = 0xF0;
 
     init_cpu(&cpu);
     set_memory(&cpu, memory);
@@ -129,7 +129,7 @@ static void get_target_address_REL_2(void **state) {
     uint16_t trg_addr = get_target_address(REL, &cpu, &ir);
 
     assert_int_equal(cpu.pc, 0x00FF);    //does not get increment in this address mode, should be done in opcode implementation
-    assert_int_equal(trg_addr, cpu.pc + 0x33 + 2);  //pc + 0x33 + 2 (2 pc increments in retrieval)
+    assert_int_equal(trg_addr, cpu.pc - 16 + 2);  //pc + 0x33 + 2 (2 pc increments in retrieval)
 }
 
 static void get_target_address_ZPG_1(void **state) {
@@ -1399,10 +1399,112 @@ static void ORA_1(void **state) {
     assert_int_equal(getFlag('Z',&cpu), 0);
 }
 
+static void PHA_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0x48;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
 
+    cpu.acc = 0x68;
+    cpu.sp = 0x0F;
 
+    clock(&cpu);
+    
+    assert_int_equal(memory[0x0F], 0x68);
+    assert_int_equal(cpu.sp, 0x0F-1);
+}
 
+static void PHP_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0x08;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
 
+    cpu.status_reg = 0xCF;
+    
+    cpu.sp = 0x0F;
+
+    clock(&cpu);
+    
+    assert_int_equal(memory[0x0F], 0xFF);
+    assert_int_equal(cpu.sp, 0x0F-1);
+}
+
+static void PLA_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0x68;
+    memory[0x0A] = 0x12;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+    
+    cpu.sp = 0x0A;
+
+    clock(&cpu);
+    
+    assert_int_equal(cpu.acc, 0x12);
+    assert_int_equal(cpu.sp, 0x0A+1);
+}
+
+static void PLP_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0x28;
+    memory[0x0A] = 0xFF;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+    
+    cpu.sp = 0x0A;
+
+    clock(&cpu);
+    
+    assert_int_equal(cpu.status_reg, 0xCF);
+    assert_int_equal(cpu.sp, 0x0A+1);
+}
+
+static void ADC_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0x69;
+    memory[1] = 10;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+    
+    cpu.acc = 10;
+
+    clock(&cpu);
+    
+    assert_int_equal(cpu.acc, 20);
+}
+
+static void SBC_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0xE9;
+    memory[1] = 5;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+    setFlag('C',1,&cpu);    //prepare by setting carry
+    cpu.acc = 15;
+
+    clock(&cpu);
+    
+    assert_int_equal(cpu.acc, 10);
+}
 
 
 
@@ -1494,6 +1596,16 @@ int main(void) {
         cmocka_unit_test(AND_1),
         cmocka_unit_test(EOR_1),
         cmocka_unit_test(ORA_1),
+
+        //stack operations
+        cmocka_unit_test(PHA_1),
+        cmocka_unit_test(PHP_1),
+        cmocka_unit_test(PLA_1),
+        cmocka_unit_test(PLP_1),
+
+        cmocka_unit_test(ADC_1),
+        cmocka_unit_test(SBC_1),
+
 
     };
     return cmocka_run_group_tests(tests, NULL, NULL);

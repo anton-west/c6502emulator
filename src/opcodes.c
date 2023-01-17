@@ -25,8 +25,14 @@ uint16_t get_target_address(address_mode mode, Processor *cpu, Ir *ir) {
 
     case REL:
         {
-            uint8_t offset = read(cpu, cpu->pc + 1);
+            uint16_t offset = read(cpu, cpu->pc + 1);
+            if (offset & 0x80) {
+		        offset |= 0xFF00;
+            }
             uint16_t trg_addr = cpu->pc + offset + 2;
+            if((trg_addr & 0xFF00) != (cpu->pc & 0xFF00)) {
+                ir->cycles++;
+            }
             return (uint16_t) trg_addr;
         }
 
@@ -131,7 +137,46 @@ uint16_t get_target_address(address_mode mode, Processor *cpu, Ir *ir) {
 }
 
 
-int I_ADC(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+int I_ADC(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="ADC";
+    switch (byte)
+    {
+    case 0x69:
+        ir->addr_mode=IMM; ir->bytes=2; ir->cycles=2;
+        break;
+    case 0x65:
+        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=3;
+        break;
+    case 0x75:
+        ir->addr_mode=ZPX; ir->bytes=2; ir->cycles=4;
+        break;
+    case 0x6D:
+        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=4;
+        break;
+    case 0x7D:
+        ir->addr_mode=ABX; ir->bytes=3; ir->cycles=4;
+        break;
+    case 0x79:
+        ir->addr_mode=ABY; ir->bytes=3; ir->cycles=4;
+        break;
+    case 0x61:
+        ir->addr_mode=IDX; ir->bytes=2; ir->cycles=6;
+        break;
+    case 0x71:
+        ir->addr_mode=IDY; ir->bytes=2; ir->cycles=5;
+        break;
+    default:
+        break;
+    }
+    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    uint8_t trg_byte = read(cpu, trg_addr);
+    uint16_t result = (uint16_t) cpu->acc + (uint16_t) trg_byte + (uint16_t) getFlag('C', cpu);
+    setFlag('C', result > 255, cpu);
+    setFlag('Z', (result & 0x00FF) == 0, cpu);
+    setFlag('N', result & 0x80, cpu);
+    setFlag('V', ( ( (uint16_t)cpu->acc ^ (uint16_t)result ) & ~( (uint16_t)cpu->acc ^ (uint16_t)trg_byte ) ) & 0x0080, cpu);
+    cpu->acc = (uint8_t) (result & 0x00FF);
+}
 int I_AND(uint8_t byte, Processor *cpu, Ir *ir) {
     ir->opcode_mnemonic="AND";
     switch (byte)
@@ -200,26 +245,348 @@ int I_ASL(uint8_t byte, Processor *cpu, Ir *ir) {
     setFlag('Z', new_value == 0, cpu);
     setFlag('C', carry_flag_value, cpu);
 }
-int I_BCC(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_BCS(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_BEQ(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_BIT(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_BMI(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_BNE(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_BPL(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_BRK(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_BVC(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_BVS(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_CLC(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_CLD(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_CLI(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_CLV(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_CMP(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_CPX(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_CPY(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_DEC(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_DEX(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_DEY(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+int I_BCC(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="BCC";
+    switch (byte)
+    {
+    case 0x90:
+        ir->addr_mode=REL; ir->bytes=2; ir->cycles=1;   //TODO: check if this should be 1 or 2, doc is confusing
+        break;
+    default:
+        break;
+    }
+    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    if (getFlag('C', cpu) == 0) {
+        cpu->pc = trg_addr;
+    }
+}
+int I_BCS(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="BCS";
+    switch (byte)
+    {
+    case 0xB0:
+        ir->addr_mode=REL; ir->bytes=2; ir->cycles=1;   //TODO: check if this should be 1 or 2, doc is confusing
+        break;
+    default:
+        break;
+    }
+    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    if (getFlag('C', cpu) == 1) {
+        cpu->pc = trg_addr;
+    }
+}
+int I_BEQ(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="BEQ";
+    switch (byte)
+    {
+    case 0xF0:
+        ir->addr_mode=REL; ir->bytes=2; ir->cycles=1;   //TODO: check if this should be 1 or 2, doc is confusing
+        break;
+    default:
+        break;
+    }
+    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    if (getFlag('Z', cpu) == 1) {
+        cpu->pc = trg_addr;
+    }
+}
+int I_BIT(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="BIT";
+    switch (byte)
+    {
+    case 0x24:
+        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=3;
+        break;
+    case 0x2C:
+        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=4;
+    default:
+        break;
+    }
+    uint16_t trg_addr= get_target_address(ir->addr_mode, cpu, ir);
+    uint8_t trg_byte = read(cpu, trg_addr);
+
+    uint8_t result = cpu->acc & trg_byte;
+    setFlag('N', trg_byte & 0x80, cpu);
+    setFlag('V', trg_byte & 0x40, cpu);
+    setFlag('Z', result == 0, cpu);
+}
+int I_BMI(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="BMI";
+    switch (byte)
+    {
+    case 0x30:
+        ir->addr_mode=REL; ir->bytes=2; ir->cycles=1;   //TODO: check if this should be 1 or 2, doc is confusing
+        break;
+    default:
+        break;
+    }
+    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    if (getFlag('N', cpu) == 1) {
+        cpu->pc = trg_addr;
+    }
+}
+int I_BNE(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="BNE";
+    switch (byte)
+    {
+    case 0xD0:
+        ir->addr_mode=REL; ir->bytes=2; ir->cycles=1;   //TODO: check if this should be 1 or 2, doc is confusing
+        break;
+    default:
+        break;
+    }
+    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    if (getFlag('Z', cpu) == 0) {
+        cpu->pc = trg_addr;
+    }
+}
+int I_BPL(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="BPL";
+    switch (byte)
+    {
+    case 0x10:
+        ir->addr_mode=REL; ir->bytes=2; ir->cycles=1;   //TODO: check if this should be 1 or 2, doc is confusing
+        break;
+    default:
+        break;
+    }
+    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    if (getFlag('N', cpu) == 0) {
+        cpu->pc = trg_addr;
+    }
+}
+int I_BRK(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="BRK";
+    switch (byte)
+    {
+    case 0x00:
+        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=7;
+        break;
+    default:
+        break;
+    }
+    setFlag('I', 1, cpu);
+    write(cpu, cpu->sp, cpu->pc+2);
+    cpu->sp--;
+    write(cpu, cpu->sp, cpu->status_reg);
+    cpu->sp--;
+}
+int I_BVC(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="BVC";
+    switch (byte)
+    {
+    case 0x50:
+        ir->addr_mode=REL; ir->bytes=2; ir->cycles=1;   //TODO: check if this should be 1 or 2, doc is confusing
+        break;
+    default:
+        break;
+    }
+    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    if (getFlag('V', cpu) == 0) {
+        cpu->pc = trg_addr;
+    }
+}
+int I_BVS(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="BVC";
+    switch (byte)
+    {
+    case 0x70:
+        ir->addr_mode=REL; ir->bytes=2; ir->cycles=1;   //TODO: check if this should be 1 or 2, doc is confusing
+        break;
+    default:
+        break;
+    }
+    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    if (getFlag('V', cpu) == 01) {
+        cpu->pc = trg_addr;
+    }
+}
+int I_CLC(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="CLC";
+    switch (byte)
+    {
+    case 0x18:
+        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
+        break;
+    default:
+        break;
+    }
+    setFlag('C', 0, cpu);   //clear carry
+}
+int I_CLD(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="CLD";
+    switch (byte)
+    {
+    case 0xD8:
+        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
+        break;
+    default:
+        break;
+    }
+    setFlag('D', 0, cpu);   //clear decimal
+}
+int I_CLI(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="CLI";
+    switch (byte)
+    {
+    case 0x58:
+        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
+        break;
+    default:
+        break;
+    }
+    setFlag('I', 0, cpu);   //clear interrupt disable
+}
+int I_CLV(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="CLV";
+    switch (byte)
+    {
+    case 0xB8:
+        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
+        break;
+    default:
+        break;
+    }
+    setFlag('V', 0, cpu);   //clear overflow
+}
+int I_CMP(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="CMP";
+    switch (byte)
+    {
+    case 0xC9:
+        ir->addr_mode=IMM; ir->bytes=2; ir->cycles=2;
+        break;
+    case 0xC5:
+        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=3;
+        break;
+    case 0xD5:
+        ir->addr_mode=ZPX; ir->bytes=2; ir->cycles=4;
+        break;
+    case 0xCD:
+        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=4;
+        break;
+    case 0xDD:
+        ir->addr_mode=ABX; ir->bytes=3; ir->cycles=4;
+        break;
+    case 0xD9:
+        ir->addr_mode=ABY; ir->bytes=3; ir->cycles=4;
+        break;
+    case 0xC1:
+        ir->addr_mode=IDX; ir->bytes=2; ir->cycles=6;
+        break;
+    case 0xD1:
+        ir->addr_mode=IDY; ir->bytes=2; ir->cycles=5;
+        break;
+    default:
+        break;
+    }
+    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    uint8_t trg_byte = read(cpu, trg_addr);
+    uint8_t cmp_result = cpu->acc - trg_byte;
+    setFlag('N', cmp_result & 0x80, cpu);
+    setFlag('Z', (cpu->acc == trg_byte) ? 1 : 0, cpu);
+    setFlag('C', (cpu->acc >= trg_byte) ? 1 : 0, cpu);
+}
+int I_CPX(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="CPX";
+    switch (byte)
+    {
+    case 0xE0:
+        ir->addr_mode=IMM; ir->bytes=2; ir->cycles=2;
+        break;
+    case 0xE4:
+        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=3;
+        break;
+    case 0xEC:
+        ir->addr_mode=ABS; ir->bytes=2; ir->cycles=4;
+        break;
+    default:
+        break;
+    }
+    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    uint8_t trg_byte = read(cpu, trg_addr);
+    uint8_t cmp_result = cpu->x_reg - trg_byte;
+    setFlag('N', cmp_result & 0x80, cpu);
+    setFlag('Z', (cpu->x_reg == trg_byte) ? 1 : 0, cpu);
+    setFlag('C', (cpu->x_reg >= trg_byte) ? 1 : 0, cpu);
+}
+int I_CPY(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="CPY";
+    switch (byte)
+    {
+    case 0xC0:
+        ir->addr_mode=IMM; ir->bytes=2; ir->cycles=2;
+        break;
+    case 0xC4:
+        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=3;
+        break;
+    case 0xCC:
+        ir->addr_mode=ABS; ir->bytes=2; ir->cycles=4;
+        break;
+    default:
+        break;
+    }
+    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    uint8_t trg_byte = read(cpu, trg_addr);
+    uint8_t cmp_result = cpu->y_reg - trg_byte;
+    setFlag('N', cmp_result & 0x80, cpu);
+    setFlag('Z', (cpu->y_reg == trg_byte) ? 1 : 0, cpu);
+    setFlag('C', (cpu->y_reg >= trg_byte) ? 1 : 0, cpu);
+}
+int I_DEC(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="DEC";
+    switch (byte)
+    {
+    case 0xC6:
+        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=5;
+        break;
+    case 0xD6:
+        ir->addr_mode=ZPX; ir->bytes=2; ir->cycles=6;
+        break;
+    case 0xCE:
+        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=6;
+        break;
+    case 0xDE:
+        ir->addr_mode=ABX; ir->bytes=3; ir->cycles=7;
+        break;
+    default:
+        break;
+    }
+    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    uint8_t trg_byte = read(cpu, trg_addr);
+    uint8_t new_value = trg_byte - 1;
+    write(cpu, trg_addr, new_value);
+    setFlag('N', new_value & 0x80, cpu);
+    setFlag('Z', new_value == 0, cpu);
+}
+int I_DEX(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="DEX";
+    switch (byte)
+    {
+    case 0xCA:
+        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
+        break;
+    default:
+        break;
+    }
+    cpu->x_reg--;
+    setFlag('N', cpu->x_reg & 0x80, cpu);
+    setFlag('Z', cpu->x_reg == 0, cpu);
+}
+int I_DEY(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="DEY";
+    switch (byte)
+    {
+    case 0x88:
+        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
+        break;
+    default:
+        break;
+    }
+    cpu->y_reg--;
+    setFlag('N', cpu->y_reg & 0x80, cpu);
+    setFlag('Z', cpu->y_reg == 0, cpu);
+}
 int I_EOR(uint8_t byte, Processor *cpu, Ir *ir) {
     ir->opcode_mnemonic="EOR";
     switch (byte)
@@ -258,11 +625,93 @@ int I_EOR(uint8_t byte, Processor *cpu, Ir *ir) {
     setFlag('N', and_comparison & 0x80, cpu);
     setFlag('Z', and_comparison == 0, cpu);
 }
-int I_INC(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_INX(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_INY(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_JMP(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_JSR(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+int I_INC(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="INC";
+    switch (byte)
+    {
+    case 0xE6:
+        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=5;
+        break;
+    case 0xF6:
+        ir->addr_mode=ZPX; ir->bytes=2; ir->cycles=6;
+        break;
+    case 0xEE:
+        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=6;
+        break;
+    case 0xFE:
+        ir->addr_mode=ABX; ir->bytes=3; ir->cycles=7;
+        break;
+    default:
+        break;
+    }
+    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    uint8_t trg_byte = read(cpu, trg_addr);
+    uint8_t new_value = trg_byte + 1;
+    write(cpu, trg_addr, new_value);
+    setFlag('N', new_value & 0x80, cpu);
+    setFlag('Z', new_value == 0, cpu);
+}
+int I_INX(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="INX";
+    switch (byte)
+    {
+    case 0xE8:
+        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
+        break;
+    default:
+        break;
+    }
+    cpu->x_reg++;
+    setFlag('N', cpu->x_reg & 0x80, cpu);
+    setFlag('Z', cpu->x_reg == 0, cpu);
+}
+int I_INY(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="INY";
+    switch (byte)
+    {
+    case 0xC8:
+        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
+        break;
+    default:
+        break;
+    }
+    cpu->y_reg++;
+    setFlag('N', cpu->y_reg & 0x80, cpu);
+    setFlag('Z', cpu->y_reg == 0, cpu);
+}
+int I_JMP(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="JMP";
+    switch (byte)
+    {
+    case 0x4C:
+        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=3;
+        break;
+    case 0x6C:
+        ir->addr_mode=IND; ir->bytes=3; ir->cycles=5;
+        break;
+    default:
+        break;
+    }
+    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    cpu->pc=trg_addr;
+}
+int I_JSR(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="JSR";
+    switch (byte)
+    {
+    case 0x20:
+        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=6;
+        break;
+    default:
+        break;
+    }
+    write(cpu, cpu->sp, (cpu->pc >> 8) & 0x00FF );
+    cpu->sp--;
+    write(cpu, cpu->sp, cpu->pc & 0x00FF );
+    cpu->sp--;
+    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    cpu->pc=trg_addr;
+}
 int I_LDA(uint8_t byte, Processor *cpu, Ir *ir) {
     ir->opcode_mnemonic="LDA";  
     switch (byte)
@@ -382,7 +831,18 @@ int I_LSR(uint8_t byte, Processor *cpu, Ir *ir) {
     setFlag('Z', new_value == 0, cpu);
     setFlag('C', carry_flag_value, cpu);
 }
-int I_NOP(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+int I_NOP(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="NOP";
+    switch (byte)
+    {
+    case 0xEA:
+        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
+        break;
+    default:
+        break;
+    }
+    cpu->pc++;
+}
 int I_ORA(uint8_t byte, Processor *cpu, Ir *ir) {
     ir->opcode_mnemonic="ORA";
     switch (byte)
@@ -421,10 +881,60 @@ int I_ORA(uint8_t byte, Processor *cpu, Ir *ir) {
     setFlag('N', and_comparison & 0x80, cpu);
     setFlag('Z', and_comparison == 0, cpu);
 }
-int I_PHA(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_PHP(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_PLA(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_PLP(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+int I_PHA(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="PHA";
+    switch (byte)
+    {
+    case 0x48:
+        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=3;
+        break;
+    default:
+        break;
+    }
+    write(cpu, (uint16_t)cpu->sp, cpu->acc);
+    cpu->sp--;
+}
+int I_PHP(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="PHP";
+    switch (byte)
+    {
+    case 0x08:
+        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=3;
+        break;
+    default:
+        break;
+    }
+    write(cpu, (uint16_t)cpu->sp, cpu->status_reg | 0x30);
+    cpu->sp--;
+}
+int I_PLA(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="PLA";
+    switch (byte)
+    {
+    case 0x68:
+        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=4;
+        break;
+    default:
+        break;
+    }
+    cpu->acc = read(cpu, (uint16_t)cpu->sp);
+    cpu->sp++;
+    setFlag('N', cpu->acc & 0x80, cpu);
+    setFlag('Z', cpu->acc == 0, cpu);
+}
+int I_PLP(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="PHP";
+    switch (byte)
+    {
+    case 0x28:
+        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=3;
+        break;
+    default:
+        break;
+    }
+    cpu->status_reg = read(cpu, (uint16_t)cpu->sp) & 0xCF;
+    cpu->sp++;
+}
 int I_ROL(uint8_t byte, Processor *cpu, Ir *ir) {
     ir->opcode_mnemonic="ROL";  
     switch (byte)
@@ -485,12 +995,118 @@ int I_ROR(uint8_t byte, Processor *cpu, Ir *ir) {
     setFlag('Z', new_value == 0, cpu);
     setFlag('C', carry_flag_value, cpu);    //set shifted out bit as new carry}
 }
-int I_RTI(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_RTS(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_SBC(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_SEC(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_SED(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
-int I_SEI(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+int I_RTI(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="RTI";
+    switch (byte)
+    {
+    case 0x40:
+        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=6;
+        break;
+    default:
+        break;
+    }
+    cpu->sp++;
+    cpu->status_reg = read(cpu, cpu->sp) & 0xCB;    //interrupt flag ignored and b flags
+    cpu->sp++;
+    cpu->pc = read(cpu, cpu->sp);
+}
+int I_RTS(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="RTS";
+    switch (byte)
+    {
+    case 0x60:
+        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=6;
+        break;
+    default:
+        break;
+    }
+    cpu->sp++;
+    uint16_t low_byte = read(cpu, cpu->sp);
+    uint16_t high_byte = read(cpu, cpu->sp);
+
+    uint16_t trg_addr = low_byte | ((high_byte << 8)  & 0xFF00);
+    cpu->pc=trg_addr;
+    cpu->pc++;
+}
+int I_SBC(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="SBC";
+    switch (byte)
+    {
+    case 0xE9:
+        ir->addr_mode=IMM; ir->bytes=2; ir->cycles=2;
+        break;
+    case 0xE5:
+        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=3;
+        break;
+    case 0xF5:
+        ir->addr_mode=ZPX; ir->bytes=2; ir->cycles=4;
+        break;
+    case 0xED:
+        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=4;
+        break;
+    case 0xFD:
+        ir->addr_mode=ABX; ir->bytes=3; ir->cycles=4;
+        break;
+    case 0xF9:
+        ir->addr_mode=ABY; ir->bytes=3; ir->cycles=4;
+        break;
+    case 0xE1:
+        ir->addr_mode=IDX; ir->bytes=2; ir->cycles=6;
+        break;
+    case 0xF1:
+        ir->addr_mode=IDY; ir->bytes=2; ir->cycles=5;
+        break;
+    default:
+        break;
+    }
+    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    uint8_t trg_byte = read(cpu, trg_addr);
+
+    uint16_t value_inv = ((uint16_t)trg_byte) ^ 0x00FF;
+
+    uint16_t result = (uint16_t) cpu->acc + value_inv + (uint16_t) getFlag('C', cpu);
+    setFlag('C', result > 255, cpu);
+    setFlag('Z', (result & 0x00FF) == 0, cpu);
+    setFlag('N', result & 0x80, cpu);
+    setFlag('V', ( ( (uint16_t)cpu->acc ^ (uint16_t)result ) & ~( (uint16_t)cpu->acc ^ (uint16_t)trg_byte ) ) & 0x0080, cpu);
+    cpu->acc = (uint8_t) (result & 0x00FF);
+}
+int I_SEC(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="SEC";
+    switch (byte)
+    {
+    case 0x38:
+        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
+        break;
+    default:
+        break;
+    }
+    setFlag('C', 1, cpu);   //set carry bit
+}
+int I_SED(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="SED";
+    switch (byte)
+    {
+    case 0xF8:
+        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
+        break;
+    default:
+        break;
+    }
+    setFlag('D', 1, cpu);   //set decimal bit
+}
+int I_SEI(uint8_t byte, Processor *cpu, Ir *ir) {
+    ir->opcode_mnemonic="SEI";
+    switch (byte)
+    {
+    case 0x78:
+        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
+        break;
+    default:
+        break;
+    }
+    setFlag('I', 1, cpu);   //set interrupt disable bit
+}
 int I_STA(uint8_t byte, Processor *cpu, Ir *ir) {
     ir->opcode_mnemonic="STA";  
     switch (byte)
