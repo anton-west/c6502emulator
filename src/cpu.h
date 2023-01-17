@@ -40,6 +40,8 @@ uint8_t fetch(Processor *cpu);
 
 uint8_t read(Processor *cpu, uint16_t addr);
 
+uint8_t write(Processor *cpu, uint16_t addr, uint8_t value);
+
 int clock(Processor *cpu);
 
 int setFlag(const char flag, uint16_t value, Processor *cpu);

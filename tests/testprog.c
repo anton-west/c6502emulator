@@ -929,6 +929,491 @@ static void LDA_IDY_2(void **state) {
     assert_int_equal(getFlag('N',&cpu), 1);
 }
 
+///////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////
+/////////       ACTUAL TESTS            ///////////////////
+///////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////
+
+//transfer instructions
+
+static void LDA_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
+    Processor cpu = {0};
+    memory[0] = 0xA9;
+    memory[1] = 0xF0;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+    clock(&cpu);
+
+    assert_int_equal(cpu.acc, 0xF0);
+    assert_int_equal(getFlag('N',&cpu), 1);
+    assert_int_equal(getFlag('Z',&cpu), 0);
+}
+
+static void LDA_2(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0x01,0};
+    Processor cpu = {0};
+    memory[0] = 0xA9;
+    memory[1] = 0x00;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+    clock(&cpu);
+
+    assert_int_equal(cpu.acc, 0x00);
+    assert_int_equal(getFlag('N',&cpu), 0);
+    assert_int_equal(getFlag('Z',&cpu), 1);
+}
+
+static void LDX_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0xA2;
+    memory[1] = 0xF0;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+    clock(&cpu);
+
+    assert_int_equal(cpu.x_reg, 0xF0);
+    assert_int_equal(getFlag('N',&cpu), 1);
+    assert_int_equal(getFlag('Z',&cpu), 0);
+}
+
+static void LDX_2(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0x01,0};
+    Processor cpu = {0};
+    memory[0] = 0xA2;
+    memory[1] = 0x00;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+    clock(&cpu);
+
+    assert_int_equal(cpu.x_reg, 0x00);
+    assert_int_equal(getFlag('N',&cpu), 0);
+    assert_int_equal(getFlag('Z',&cpu), 1);
+}
+
+static void LDY_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0xA0;
+    memory[1] = 0xF0;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+    clock(&cpu);
+
+    assert_int_equal(cpu.y_reg, 0xF0);
+    assert_int_equal(getFlag('N',&cpu), 1);
+    assert_int_equal(getFlag('Z',&cpu), 0);
+}
+
+static void LDY_2(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0x01,0};
+    Processor cpu = {0};
+    memory[0] = 0xA0;
+    memory[1] = 0x00;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+    clock(&cpu);
+
+    assert_int_equal(cpu.y_reg, 0x00);
+    assert_int_equal(getFlag('N',&cpu), 0);
+    assert_int_equal(getFlag('Z',&cpu), 1);
+}
+
+static void STA_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0x85;
+    memory[1] = 0x02;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.acc = 0xFF;
+
+    clock(&cpu);
+    
+    assert_int_equal(memory[2], 0xFF);
+    assert_int_equal(cpu.status_reg, 0);
+}
+
+static void STX_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0x86;
+    memory[1] = 0x02;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.x_reg = 0xFF;
+
+    clock(&cpu);
+    
+    assert_int_equal(memory[2], 0xFF);
+    assert_int_equal(cpu.status_reg, 0);
+}
+
+static void STY_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0x84;
+    memory[1] = 0x02;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.y_reg = 0xFF;
+
+    clock(&cpu);
+    
+    assert_int_equal(memory[2], 0xFF);
+    assert_int_equal(cpu.status_reg, 0);
+}
+
+static void TAX_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0xAA;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.acc = 0xFF;
+
+    clock(&cpu);
+    
+    assert_int_equal(cpu.x_reg, 0xFF);
+    assert_int_equal(getFlag('N',&cpu), 1);
+    assert_int_equal(getFlag('Z',&cpu), 0);
+}
+
+static void TAY_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0xA8;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.acc = 0xFF;
+
+    clock(&cpu);
+    
+    assert_int_equal(cpu.y_reg, 0xFF);
+    assert_int_equal(getFlag('N',&cpu), 1);
+    assert_int_equal(getFlag('Z',&cpu), 0);
+}
+
+static void TSX_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0xBA;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.sp = 0xFF;
+
+    clock(&cpu);
+    
+    assert_int_equal(cpu.x_reg, 0xFF);
+    assert_int_equal(getFlag('N',&cpu), 1);
+    assert_int_equal(getFlag('Z',&cpu), 0);
+}
+
+static void TXA_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0x8A;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.x_reg = 0xFF;
+
+    clock(&cpu);
+    
+    assert_int_equal(cpu.acc, 0xFF);
+    assert_int_equal(getFlag('N',&cpu), 1);
+    assert_int_equal(getFlag('Z',&cpu), 0);
+}
+
+static void TXS_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0x9A;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.x_reg = 0xFF;
+
+    clock(&cpu);
+    
+    assert_int_equal(cpu.sp, 0xFF);
+    assert_int_equal(cpu.status_reg, 0);
+}
+
+static void TYA_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0x98;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.y_reg = 0xFF;
+
+    clock(&cpu);
+    
+    assert_int_equal(cpu.acc, 0xFF);
+    assert_int_equal(getFlag('N',&cpu), 1);
+    assert_int_equal(getFlag('Z',&cpu), 0);
+}
+
+// shift and rotate instructions
+
+static void ASL_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0x0A;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.acc = 0x88;
+
+    clock(&cpu);
+    
+    assert_int_equal(cpu.acc, 0x10);
+    assert_int_equal(getFlag('N',&cpu), 0);
+    assert_int_equal(getFlag('Z',&cpu), 0);
+    assert_int_equal(getFlag('C',&cpu), 1);
+}
+
+
+static void LSR_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0x4A;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.acc = 0x88;
+
+    clock(&cpu);
+    
+    assert_int_equal(cpu.acc, 0x44);
+    assert_int_equal(getFlag('N',&cpu), 0);
+    assert_int_equal(getFlag('Z',&cpu), 0);
+    assert_int_equal(getFlag('C',&cpu), 0);
+}
+
+static void LSR_2(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0x4A;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.acc = 0x8F;
+
+    clock(&cpu);
+    
+    assert_int_equal(cpu.acc, 0x47);
+    assert_int_equal(getFlag('N',&cpu), 0);
+    assert_int_equal(getFlag('Z',&cpu), 0);
+    assert_int_equal(getFlag('C',&cpu), 1);
+}
+
+static void ROL_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0x2A;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.acc = 0x88;
+    setFlag('C', 0, &cpu);
+
+    clock(&cpu);
+    
+    assert_int_equal(cpu.acc, 0x10);
+    assert_int_equal(getFlag('N',&cpu), 0);
+    assert_int_equal(getFlag('Z',&cpu), 0);
+    assert_int_equal(getFlag('C',&cpu), 1);
+}
+
+static void ROL_2(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0x2A;
+    memory[1] = 0x2A;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.acc = 0x88;
+
+    clock(&cpu);
+    clock(&cpu);
+    clock(&cpu);
+    clock(&cpu);
+    
+    assert_int_equal(cpu.acc, 0x21);
+    assert_int_equal(getFlag('N',&cpu), 0);
+    assert_int_equal(getFlag('Z',&cpu), 0);
+    assert_int_equal(getFlag('C',&cpu), 0);
+}
+
+static void ROR_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0x6A;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.acc = 0x88;
+    setFlag('C', 0, &cpu);
+
+    clock(&cpu);
+    
+    assert_int_equal(cpu.acc, 0x44);
+    assert_int_equal(getFlag('N',&cpu), 0);
+    assert_int_equal(getFlag('Z',&cpu), 0);
+    assert_int_equal(getFlag('C',&cpu), 0);
+}
+
+static void ROR_2(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0x6A;
+    memory[1] = 0x6A;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.acc = 0x88;
+
+    clock(&cpu);
+    clock(&cpu);
+    clock(&cpu);
+    clock(&cpu);
+    
+    assert_int_equal(cpu.acc, 0x22);
+    assert_int_equal(getFlag('N',&cpu), 0);
+    assert_int_equal(getFlag('Z',&cpu), 0);
+    assert_int_equal(getFlag('C',&cpu), 0);
+}
+
+// bitwise logical operations
+
+static void AND_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0x29;
+    memory[1] = 0x33;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.acc = 0x0F;
+
+    clock(&cpu);
+    
+    assert_int_equal(cpu.acc, 0x03);
+    assert_int_equal(getFlag('N',&cpu), 0);
+    assert_int_equal(getFlag('Z',&cpu), 0);
+}
+
+static void EOR_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0x49;
+    memory[1] = 0x22;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.acc = 0x0F;
+
+    clock(&cpu);
+    
+    assert_int_equal(cpu.acc, 0x2D);
+    assert_int_equal(getFlag('N',&cpu), 0);
+    assert_int_equal(getFlag('Z',&cpu), 0);
+}
+
+static void ORA_1(void **state) {
+    (void) state;
+    
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
+    Processor cpu = {0};
+    memory[0] = 0x09;
+    memory[1] = 0x22;
+    init_cpu(&cpu);
+    set_memory(&cpu, memory);
+
+    cpu.acc = 0x0F;
+
+    clock(&cpu);
+    
+    assert_int_equal(cpu.acc, 0x2F);
+    assert_int_equal(getFlag('N',&cpu), 0);
+    assert_int_equal(getFlag('Z',&cpu), 0);
+}
+
+
+
+
+
+
+
+
+
+
+
+///////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////
+/////////       END TESTS               ///////////////////
+///////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////
 int main(void) {
     
     const struct CMUnitTest tests[] = {
@@ -959,7 +1444,7 @@ int main(void) {
         cmocka_unit_test(get_target_address_IDY_2),
         cmocka_unit_test(get_target_address_IDY_3),
 
-        //LDA tests
+        //first LDA tests
         cmocka_unit_test(LDA_IMM_1),
         cmocka_unit_test(LDA_IMM_2),
         cmocka_unit_test(LDA_ZEP_1),
@@ -977,6 +1462,38 @@ int main(void) {
         cmocka_unit_test(LDA_IDY_1),
         cmocka_unit_test(LDA_IDY_2),
 
+        //actual opcode tests go here
+
+        //transfer tests
+        cmocka_unit_test(LDA_1),
+        cmocka_unit_test(LDA_2),
+        cmocka_unit_test(LDX_1),
+        cmocka_unit_test(LDX_2),
+        cmocka_unit_test(LDY_1),
+        cmocka_unit_test(LDY_2),
+        cmocka_unit_test(STA_1),
+        cmocka_unit_test(STX_1),
+        cmocka_unit_test(STY_1),
+        cmocka_unit_test(TAX_1),
+        cmocka_unit_test(TAY_1),
+        cmocka_unit_test(TSX_1),
+        cmocka_unit_test(TXA_1),
+        cmocka_unit_test(TXS_1),
+        cmocka_unit_test(TYA_1),
+
+        //shift and rotate tests
+        cmocka_unit_test(ASL_1),
+        cmocka_unit_test(LSR_1),
+        cmocka_unit_test(LSR_2),
+        cmocka_unit_test(ROL_1),
+        cmocka_unit_test(ROL_2),
+        cmocka_unit_test(ROR_1),
+        cmocka_unit_test(ROR_2),
+
+        //logical bitwise test
+        cmocka_unit_test(AND_1),
+        cmocka_unit_test(EOR_1),
+        cmocka_unit_test(ORA_1),
 
     };
     return cmocka_run_group_tests(tests, NULL, NULL);

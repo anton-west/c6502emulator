@@ -24,6 +24,11 @@ uint8_t read(Processor *cpu, uint16_t addr) {
     return cpu->memory[addr];
 }
 
+uint8_t write(Processor *cpu, uint16_t addr, uint8_t value) {
+    cpu->memory[addr] = value;
+    return cpu->memory[addr];
+}
+
 /*tells cpu to read value from memory at program counter index
 uint8_t read(Processor *cpu) {
     return cpu->memory[cpu->pc];
