@@ -4,7 +4,7 @@
 #include "opcodes.h"
 
 void init_cpu(Processor* cpu) {
-    cpu->pc=0;
+    cpu->pc=0x0400;     //pc starts at address 0x0400 by default
     cpu->sp=0;
     cpu->status_reg=0;
 
