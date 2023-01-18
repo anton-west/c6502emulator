@@ -10,7 +10,12 @@ void destroy_win(WINDOW *local_win);
 
 int main(int argc, char *argv[]) {	
     
-    WINDOW *my_win;
+    WINDOW *win_1;
+    WINDOW *win_2;
+    WINDOW *win_sr;
+    WINDOW *win_cpu;
+    WINDOW *win_extra;
+
 	int startx, starty, width, height;
 	int ch;
 
@@ -26,15 +31,20 @@ int main(int argc, char *argv[]) {
 	starty = 0;	/* Calculating for a center placement */
 	startx = 0;	/* of the window		*/
 
-    my_win = newwin(height, width, starty, startx);
-	box(my_win, 0 , 0);	    	/* 0, 0 gives default characters 
-	            				 * for the vertical and horizontal
-				            	 * lines			                */
-	wrefresh(my_win);   		/* Show that box 		            */
+    win_1 = create_newwin(5, 74, 0, 0);
+    win_2 = create_newwin(5, 74, 7, 0);
+    win_sr = create_newwin(9, 12, 13, 0);
+    win_cpu = create_newwin(9, 12, 13, 15);
+    win_extra = create_newwin(9, 44, 13, 30);
+	/* Show that box 		            */
     
     getch();
 
-	destroy_win(my_win);
+	destroy_win(win_1);
+    destroy_win(win_2);
+    destroy_win(win_sr);
+    destroy_win(win_cpu);
+    destroy_win(win_extra);
 		
 	endwin();			/* End curses mode		  */
 	return 0;
