@@ -31,13 +31,43 @@ int main(int argc, char *argv[]) {
 	starty = 0;	/* Calculating for a center placement */
 	startx = 0;	/* of the window		*/
 
-    win_1 = create_newwin(5, 74, 0, 0);
-    win_2 = create_newwin(5, 74, 7, 0);
-    win_sr = create_newwin(9, 12, 13, 0);
-    win_cpu = create_newwin(9, 12, 13, 15);
-    win_extra = create_newwin(9, 44, 13, 30);
+    win_1 = create_newwin(6, 74, 0, 0);
+    win_2 = create_newwin(6, 74, 6, 0);
+    win_sr = create_newwin(10, 12, 12, 0);
+    win_cpu = create_newwin(10, 17, 12, 12);
+    win_extra = create_newwin(10, 45, 12, 29);
 	/* Show that box 		            */
-    
+    mvwprintw(win_1,1,1, "  FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF  ");
+    mvwprintw(win_1,2,1, "  FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF  ");
+    mvwprintw(win_1,3,1, "  FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF  ");
+    mvwprintw(win_1,4,1, "  FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF  ");
+
+    mvwprintw(win_2,1,1, "  FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF  ");
+    mvwprintw(win_2,2,1, "  FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF  ");
+    mvwprintw(win_2,3,1, "  FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF  ");
+    mvwprintw(win_2,4,1, "  FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF  ");
+
+    mvwprintw(win_sr,1,3, "N:  1");
+    mvwprintw(win_sr,2,3, "V:  1");
+    mvwprintw(win_sr,3,3, "s:  0");
+    mvwprintw(win_sr,4,3, "s:  0");
+    mvwprintw(win_sr,5,3, "D:  1");
+    mvwprintw(win_sr,6,3, "I:  1");
+    mvwprintw(win_sr,7,3, "Z:  1");
+    mvwprintw(win_sr,8,3, "C:  1");
+
+    mvwprintw(win_cpu,1,3, "AC:  0xFF");
+    mvwprintw(win_cpu,2,3, "XR:  0xFF");
+    mvwprintw(win_cpu,3,3, "YR:  0xFF");
+    mvwprintw(win_cpu,5,3, "SP:  0xFF");
+    mvwprintw(win_cpu,7,3, "PC:  0xFFFF");
+
+    wrefresh(win_1);
+    wrefresh(win_2);
+    wrefresh(win_sr);
+    wrefresh(win_cpu);
+    wrefresh(win_extra);
+    refresh();
     getch();
 
 	destroy_win(win_1);
