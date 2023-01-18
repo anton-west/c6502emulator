@@ -1,6 +1,7 @@
 CC=gcc
-CFLAGS=-g -Wall -Wextra -pedantic -std=c99 -I/opt/homebrew/include -L/opt/homebrew/lib
-LDFLAGS=-lcmocka
+CFLAGS=-g -Wall -Wextra -pedantic -std=c99 
+LDFLAGS=-I/opt/homebrew/include -L/opt/homebrew/lib
+LDLIBS=-lncurses -lcmocka
 
 BINDIR=bin/debug
 BIN=$(BINDIR)/c6502
@@ -19,7 +20,6 @@ TESTS:=$(filter-out src/main.c, $(TESTS))
 #TESTBINS=$(patsubst $(TEST)/*.c, $(TEST)/bin/%, $(TESTS))
 
 all:$(BIN)
-	./$(BIN)
 
 release: cleanrelease
 release: BIN=bin/release/c6502
@@ -28,7 +28,7 @@ release: $(BIN)
 
 # Cannot use $@ as it does not update betweeen debug and release for some reason
 $(BIN): $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) -o $(BIN)
+	$(CC) $(CFLAGS) obj/main.o obj/cpu.o -o $(BIN) $(LDLIBS) $(LDFLAGS) 
 
 $(OBJ)/%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -38,7 +38,7 @@ test: $(TESTBIN)
 	./$(TESTBIN)
 
 $(TESTBIN): $(TESTS)
-	$(CC) $(CFLAGS) $(TESTS) -o $(TESTBIN) $(LDFLAGS)
+	$(CC) $(CFLAGS) $(TESTS) -o $(TESTBIN) $(LDLIBS) $(LDFLAGS)
 
 
 .PHONY: clean
