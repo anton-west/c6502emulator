@@ -16,7 +16,7 @@ void init_cpu(Processor* cpu) {
     cpu->cycles=0;
 }
 
-void set_memory(Processor *cpu, uint8_t *memory) {
+void cpu_set_memory(Processor *cpu, uint8_t *memory) {
     cpu->memory = memory;
 }
 
@@ -37,7 +37,7 @@ uint8_t read(Processor *cpu) {
 
 //fetches byte from memory and increments program counter by 1
 uint8_t cpu_fetch(Processor *cpu) {
-    uint8_t read_byte = read(cpu, cpu->pc);
+    uint8_t read_byte = cpu_read(cpu, cpu->pc);
     cpu->pc += 1;
     return read_byte;
 }
@@ -47,9 +47,9 @@ int cpu_clock(Processor *cpu) {
     //if cycle == 0, fetch next instruction at program counter location in memory
     if (cpu->cycles == 0) {
         Ir ir = {0};
-        uint8_t instruction = read(cpu, cpu->pc);
-        //opcode ptr = decode_instruction(instruction); //pc is incremented here by necessary amount
-        //(ptr)(instruction, cpu, &ir);
+        uint8_t instruction = cpu_read(cpu, cpu->pc);
+        opcode ptr = decode_instruction(instruction); //pc is incremented here by necessary amount
+        (ptr)(instruction, cpu, &ir);
         cpu->cycles += ir.cycles;
     }
     cpu->cycles --;

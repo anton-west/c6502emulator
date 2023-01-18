@@ -29,12 +29,12 @@ typedef struct Processor {
 
     uint8_t *memory;
 
-    unsigned int cycles;
+    unsigned int cycles; //the current instruction cycle that the cpu is on
 } Processor;
 
 void init_cpu(Processor *cpu);
 
-void set_memory(Processor *cpu, uint8_t *memory);
+void cpu_set_memory(Processor *cpu, uint8_t *memory);
 
 uint8_t cpu_fetch(Processor *cpu);
 
