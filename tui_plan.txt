@@ -1,0 +1,24 @@
++------------------------------------------------------------------------+
+|  FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF  |
+|  FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF  |
+|  FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF  |
+|  FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF  |
++------------------------------------------------------------------------+
+
++------------------------------------------------------------------------+
+|  FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF  |
+|  FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF  |
+|  FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF  |
+|  FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF    FF  FF  FF  FF  |
++------------------------------------------------------------------------+
+
++---------+  +-------------+  +------------------------------------------+
+|  N:  1  |  |  AC:  FF    |  |                                          |
+|  V:  1  |  |  XR:  FF    |  |                                          |
+|  s:  0  |  |  YR:  FF    |  |                                          |
+|  s:  0  |  |             |  |                                          |
+|  D:  1  |  |  SP:  FF    |  |                                          |
+|  I:  0  |  |             |  |                                          |
+|  Z:  1  |  |  PC:  FFFF  |  |                                          |
+|  C:  1  |  |             |  |                                          |
++---------+  +-------------+  +------------------------------------------+ 
