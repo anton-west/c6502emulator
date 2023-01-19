@@ -1,6 +1,8 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
+#include "cpu.h"
+
 int start_display();
 
 int close_display();

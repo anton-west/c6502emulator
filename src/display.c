@@ -50,18 +50,18 @@ void destroy_win(WINDOW *local_win)
 
 int print_to_win1(uint8_t* data, int data_n) {
     int line = 1;
-    int column = 1;
+    int column = 3;
 
     for (int i = 0; i < own_min(data_n,64); i++) {
         if (i % 16 == 0 && i != 0) {
             line++;
-            column = 1;
+            column = 3;
         }
-        if (i % 4 == 0 && i != 0 && i != 16) {
+        if (i % 4 == 0 && i != 0 && i != 16 && i != 32 && i != 48) {
             mvwprintw(win_1,line, column, "  ");
             column += 2;
         }
-        mvwprintw(win_1,line, column, "  %02X", data[i]);
+        mvwprintw(win_1,line, column, "%02X", data[i]);
         column += 4;
     }
     
@@ -71,18 +71,18 @@ int print_to_win1(uint8_t* data, int data_n) {
 
 int print_to_win2(uint8_t* data, int data_n) {
     int line = 1;
-    int column = 1;
+    int column = 3;
 
     for (int i = 0; i < own_min(data_n,64); i++) {
         if (i % 16 == 0 && i != 0) {
             line++;
-            column = 1;
+            column = 3;
         }
-        if (i % 4 == 0 && i != 0 && i != 16) {
+        if (i % 4 == 0 && i != 0 && i != 16 && i != 32 && i != 48) {
             mvwprintw(win_2,line, column, "  ");
             column += 2;
         }
-        mvwprintw(win_2,line, column, "  %02X", data[i]);
+        mvwprintw(win_2,line, column, "%02X", data[i]);
         column += 4;
     }
     
@@ -110,6 +110,7 @@ int print_to_win_cpu(Processor *cpu) {
     mvwprintw(win_cpu,3,3, "YR:  %02X", cpu->y_reg);
     mvwprintw(win_cpu,5,3, "SP:  %02X", cpu->sp);
     mvwprintw(win_cpu,7,3, "PC:  %04X", cpu->pc);
+    mvwprintw(win_cpu,8,3, "CY:  %d", cpu->cycles);
 
     wrefresh(win_cpu);
     return 0;
@@ -166,29 +167,7 @@ int start_display() {
     win_stack = create_newwin(10, 45, starty + 12, startx + 29);
 	/* Show that box 		            */
 
-    uint8_t arr[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21};
-
-    print_to_win1(arr, 21);
-
-    print_to_win2(arr, 21);
-
-    print_to_win_sr(0x55);
-
-    Processor cpu = {0};
-    init_cpu(&cpu);
-    cpu.acc = 0xAC;
-    cpu.x_reg = 0xF8;
-    cpu.y_reg = 0x55;
-    cpu.pc = 0xABCD;
-    cpu.sp = 0xF1;
-    print_to_win_cpu(&cpu);
-
-    uint8_t stacky[0x0200] = {0};
-    stacky[0x01FF] = 0; stacky[0x01FF-1] = 1; stacky[0x01FF-2] = 2; stacky[0x01FF-3] = 3; stacky[0x01FF-4] = 4; stacky[0x01FF-5] = 5; stacky[0x01FF-6] = 6; stacky[0x01FF-7] = 7; stacky[0x01FF-7] = 7;
-    print_to_win_stack(stacky, 0xFF-39);
-
     refresh();
-    getch();
 
     return 0;
 }

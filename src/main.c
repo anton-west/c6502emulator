@@ -4,9 +4,61 @@
 
 #include "display.h"
 
+#include "cpu.h"
+
+#define MAX_MEMORY_ADDR 65536
+
 int main(int argc, char *argv[]) {	
-    start_display();
     
+
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
+    
+    memory[0] = 0x0024;
+    memory[1] = 0x0002;
+    memory[2] = 0x0001;
+    
+    memory[0] = 0xA9;
+    memory[1] = 0xAA;
+    memory[2] = 0xA9;
+    memory[3] = 0xFF;
+
+    Processor cpu = {0};
+
+    init_cpu(&cpu);
+    cpu_set_memory(&cpu, memory);
+
+    start_display();
+
+    char c;
+    int cont = 1;
+    while (cont) {
+
+        //print info to display
+        print_to_win1(memory, 64);
+        print_to_win2(memory+2, 64);
+
+        print_to_win_sr(cpu.status_reg);
+        print_to_win_cpu(&cpu);
+        print_to_win_stack(memory, cpu.sp);
+        
+        refresh();
+
+        c = getch();
+
+        switch (c)
+        {
+        case 'q':
+            cont = 0;
+            break;
+        
+        case ' ':
+            cpu_clock(&cpu);
+        default:
+            break;
+        }
+
+    }
+
     close_display();
     return 0;
 }
