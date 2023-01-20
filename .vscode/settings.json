@@ -3,6 +3,7 @@
         "stdio.h": "c",
         "cpu.h": "c",
         "setjmp.h": "c",
-        "ncurses.h": "c"
+        "ncurses.h": "c",
+        "istream": "c"
     }
 }

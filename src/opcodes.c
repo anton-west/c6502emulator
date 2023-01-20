@@ -411,6 +411,7 @@ int I_CLC(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
+    cpu->pc += 1;
     setFlag('C', 0, cpu);   //clear carry
 }
 int I_CLD(uint8_t byte, Processor *cpu, Ir *ir) {
@@ -1081,6 +1082,7 @@ int I_SEC(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
+    cpu->pc += 1;
     setFlag('C', 1, cpu);   //set carry bit
 }
 int I_SED(uint8_t byte, Processor *cpu, Ir *ir) {
