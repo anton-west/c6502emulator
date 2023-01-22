@@ -4,7 +4,12 @@
 #include "opcodes.h"
 
 void init_cpu(Processor* cpu) {
-    cpu->pc=0x0000;     //pc starts at address 0x0400 by default, 0 for now so that tests pass
+
+    //read pc from reset vector (FFFC LB - FFFD HB)
+    uint16_t pc_low = cpu_read(cpu, 0xFFFC);
+    uint16_t pc_high = cpu_read(cpu, 0xFFFD);
+    cpu->pc = (pc_low & 0x00FF) | (pc_high << 8);
+    
     cpu->sp=0;
     cpu->status_reg=0;
 
@@ -29,19 +34,6 @@ uint8_t cpu_write(Processor *cpu, uint16_t addr, uint8_t value) {
     return cpu->memory[addr];
 }
 
-/*tells cpu to read value from memory at program counter index
-uint8_t read(Processor *cpu) {
-    return cpu->memory[cpu->pc];
-}
-*/
-
-//fetches byte from memory and increments program counter by 1
-uint8_t cpu_fetch(Processor *cpu) {
-    uint8_t read_byte = cpu_read(cpu, cpu->pc);
-    cpu->pc += 1;
-    return read_byte;
-}
-
 int cpu_clock(Processor *cpu) {
 
     //if cycle == 0, fetch next instruction at program counter location in memory
@@ -52,7 +44,7 @@ int cpu_clock(Processor *cpu) {
         (ptr)(instruction, cpu, &ir);
         cpu->cycles += ir.cycles;
     }
-    cpu->cycles --;
+    cpu->cycles--;
     return cpu->cycles;
 }
 

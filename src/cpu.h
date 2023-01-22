@@ -36,8 +36,6 @@ void init_cpu(Processor *cpu);
 
 void cpu_set_memory(Processor *cpu, uint8_t *memory);
 
-uint8_t cpu_fetch(Processor *cpu);
-
 uint8_t cpu_read(Processor *cpu, uint16_t addr);
 
 uint8_t cpu_write(Processor *cpu, uint16_t addr, uint8_t value);
