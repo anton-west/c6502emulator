@@ -13,7 +13,7 @@
 
 int main(int argc, char *argv[]) {	
     
-    //open binary file to read in program code
+    //open file to read in program code
     if (argc < 3) {
         fprintf(stderr, "ERROR: Not enough arguments, input file not specified!\n");
         fprintf(stderr, "       Use -b [filename] to read instructions from a binary file\n");
@@ -21,10 +21,10 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    int fd;
+    FILE *ptr;
     char *filename = argv[2];
-    fd = open(filename, O_RDONLY);
-    if (fd < 0) {
+    ptr = fopen(filename, "r");
+    if (ptr == NULL) {
         fprintf(stderr,"ERROR: could not open file \"%s\", %s\n", filename, strerror(errno));
         exit(1);
     }
@@ -34,13 +34,21 @@ int main(int argc, char *argv[]) {
 
     //read binary file into memory array
     if (strcmp(argv[1], "-b") == 0) {
-        read(fd,memory,10);
+        fread(memory,sizeof(char)*10,1, ptr);
     }
 
     //decode text file into memory array
-    //hexcodes (e.g. "A9 BB 02 FF")
+    //hexcodes (e.g. "A9 BB 02 FF" get transformed to corresponding bytes)
     if (strcmp(argv[1], "-f") == 0) {
-        
+        size_t i = 0;
+        while (!feof(ptr))
+        {
+            char str[3] = {0};
+            fscanf(ptr, "%s", str);
+            unsigned long byte = strtoul(str,NULL,16);
+            memory[i] = byte;
+            i++;
+        }
     }
 
     Processor cpu = {0};

@@ -149,6 +149,7 @@ int start_display() {
 	int startx, starty;
 	initscr();			/* Start curses mode 		*/
     curs_set(0);
+    noecho();
     refresh();
 
 	cbreak();			/* Line buffering disabled, Pass on
