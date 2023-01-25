@@ -17,19 +17,20 @@ static void null_test_success(void **state) {
 static void get_target_address_IMM_1(void **state) {
     (void) state;
 
-    uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0,5,4,3};
     Processor cpu = {0};
     Ir ir= {0};
     
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     assert_int_equal(cpu.pc, 0); 
 
-    uint16_t trg_addr = get_target_address(IMM, &cpu, &ir);
+    fetch_target_value(IMM, &cpu, &ir);
 
     assert_int_equal(cpu.pc, 2);
-    assert_int_equal(trg_addr, 1);
+    assert_int_equal(cpu.abs_addr, 1);
+    assert_int_equal(cpu.fetched_value, 5);
 }
 
 static void get_target_address_IMM_2(void **state) {
@@ -39,16 +40,16 @@ static void get_target_address_IMM_2(void **state) {
     Processor cpu = {0};
     Ir ir= {0};
     
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.pc = 0x3232;
     assert_int_equal(cpu.pc, 0x3232); 
 
-    uint16_t trg_addr = get_target_address(IMM, &cpu, &ir);
+    fetch_target_value(IMM, &cpu, &ir);
 
     assert_int_equal(cpu.pc, 0x3232 + 2);
-    assert_int_equal(trg_addr, 0x3232 + 1);
+    assert_int_equal(cpu.abs_addr, 0x3232 + 1);
 }
 
 static void get_target_address_IMM_3(void **state) {
@@ -58,16 +59,16 @@ static void get_target_address_IMM_3(void **state) {
     Processor cpu = {0};
     Ir ir= {0};
     
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.pc = 0xFFFF;
     assert_int_equal(cpu.pc, 0xFFFF); 
 
-    uint16_t trg_addr = get_target_address(IMM, &cpu, &ir);
+    fetch_target_value(IMM, &cpu, &ir);
 
     assert_int_equal(cpu.pc, 1);    //should roll over from 0xFFFF to 1
-    assert_int_equal(trg_addr, 0);  //should roll over from 0xFFFF to 0
+    assert_int_equal(cpu.abs_addr, 0);  //should roll over from 0xFFFF to 0
 }
 
 static void get_target_address_ACC(void **state) {
@@ -77,15 +78,15 @@ static void get_target_address_ACC(void **state) {
     Processor cpu = {0};
     Ir ir= {0};
     
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     assert_int_equal(cpu.pc, 0); 
 
-    uint16_t trg_addr = get_target_address(ACC, &cpu, &ir);
+    fetch_target_value(ACC, &cpu, &ir);
 
     assert_int_equal(cpu.pc, 1);
-    assert_int_equal(trg_addr, 0);
+    assert_int_equal(cpu.abs_addr, 0);
 }
 
 static void get_target_address_REL_1(void **state) {
@@ -97,15 +98,15 @@ static void get_target_address_REL_1(void **state) {
 
     memory[1] = 69;
 
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     assert_int_equal(cpu.pc, 0); 
 
-    uint16_t trg_addr = get_target_address(REL, &cpu, &ir);
+    fetch_target_value(REL, &cpu, &ir);
 
     assert_int_equal(cpu.pc, 0);
-    assert_int_equal(trg_addr, 71); //71 = pc + 69 + 2 (2 pc increments in retrieval)
+    assert_int_equal(cpu.abs_addr, 71); //71 = pc + 69 + 2 (2 pc increments in retrieval)
 
     //here pc should be set to pc = trg_addr in a real program
 }
@@ -119,17 +120,17 @@ static void get_target_address_REL_2(void **state) {
 
     memory[0x0100] = 0xF0;
 
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.pc = 0x00FF;
 
     assert_int_equal(cpu.pc, 0x00FF); 
 
-    uint16_t trg_addr = get_target_address(REL, &cpu, &ir);
+    fetch_target_value(REL, &cpu, &ir);
 
     assert_int_equal(cpu.pc, 0x00FF);    //does not get increment in this address mode, should be done in opcode implementation
-    assert_int_equal(trg_addr, cpu.pc - 16 + 2);  //pc + 0x33 + 2 (2 pc increments in retrieval)
+    assert_int_equal(cpu.abs_addr, cpu.pc - 16 + 2);  //pc + 0x33 + 2 (2 pc increments in retrieval)
 }
 
 static void get_target_address_ZPG_1(void **state) {
@@ -141,15 +142,15 @@ static void get_target_address_ZPG_1(void **state) {
 
     memory[1] = 50;
 
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     assert_int_equal(cpu.pc, 0); 
 
-    uint16_t trg_addr = get_target_address(ZPG, &cpu, &ir);
+    fetch_target_value(ZPG, &cpu, &ir);
 
     assert_int_equal(cpu.pc, 2);
-    assert_int_equal(trg_addr, 50);
+    assert_int_equal(cpu.abs_addr, 50);
 }
 
 static void get_target_address_ZPG_2(void **state) {
@@ -161,16 +162,16 @@ static void get_target_address_ZPG_2(void **state) {
 
     memory[1] = 0xFF;
 
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     assert_int_equal(cpu.pc, 0); 
 
-    uint16_t trg_addr = get_target_address(ZPG, &cpu, &ir);
+    fetch_target_value(ZPG, &cpu, &ir);
 
     assert_int_equal(cpu.pc, 2);
-    assert_int_equal(trg_addr, 0xFF);
-    assert_int_equal(trg_addr & 0xFF00, 0);
+    assert_int_equal(cpu.abs_addr, 0xFF);
+    assert_int_equal(cpu.abs_addr & 0xFF00, 0);
 }
 
 static void get_target_address_ZPX_1(void **state) {
@@ -182,18 +183,18 @@ static void get_target_address_ZPX_1(void **state) {
 
     memory[1] = 10;
 
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
     
     cpu.x_reg = 10;
 
     assert_int_equal(cpu.pc, 0); 
 
-    uint16_t trg_addr = get_target_address(ZPX, &cpu, &ir);
+    fetch_target_value(ZPX, &cpu, &ir);
 
     assert_int_equal(cpu.pc, 2);
-    assert_int_equal(trg_addr, 20);
-    assert_int_equal(trg_addr & 0xFF00, 0);
+    assert_int_equal(cpu.abs_addr, 20);
+    assert_int_equal(cpu.abs_addr & 0xFF00, 0);
 }
 
 static void get_target_address_ZPX_2(void **state) {
@@ -205,18 +206,18 @@ static void get_target_address_ZPX_2(void **state) {
 
     memory[1] = 0xFF;
 
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
     
     cpu.x_reg = 10;
 
     assert_int_equal(cpu.pc, 0); 
 
-    uint16_t trg_addr = get_target_address(ZPX, &cpu, &ir);
+    fetch_target_value(ZPX, &cpu, &ir);
 
     assert_int_equal(cpu.pc, 2);
-    assert_int_equal(trg_addr, 9);  //0xFF + 10 = 0x09
-    assert_int_equal(trg_addr & 0xFF00, 0);
+    assert_int_equal(cpu.abs_addr, 9);  //0xFF + 10 = 0x09
+    assert_int_equal(cpu.abs_addr & 0xFF00, 0);
 }
 
 static void get_target_address_ZPY_1(void **state) {
@@ -228,18 +229,18 @@ static void get_target_address_ZPY_1(void **state) {
 
     memory[1] = 10;
 
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
     
     cpu.y_reg = 10;
 
     assert_int_equal(cpu.pc, 0); 
 
-    uint16_t trg_addr = get_target_address(ZPY, &cpu, &ir);
+    fetch_target_value(ZPY, &cpu, &ir);
 
     assert_int_equal(cpu.pc, 2);
-    assert_int_equal(trg_addr, 20);
-    assert_int_equal(trg_addr & 0xFF00, 0);
+    assert_int_equal(cpu.abs_addr, 20);
+    assert_int_equal(cpu.abs_addr & 0xFF00, 0);
 }
 
 static void get_target_address_ZPY_2(void **state) {
@@ -251,18 +252,18 @@ static void get_target_address_ZPY_2(void **state) {
 
     memory[1] = 0xFF;
 
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
     
     cpu.y_reg = 10;
 
     assert_int_equal(cpu.pc, 0); 
 
-    uint16_t trg_addr = get_target_address(ZPY, &cpu, &ir);
+    fetch_target_value(ZPY, &cpu, &ir);
 
     assert_int_equal(cpu.pc, 2);
-    assert_int_equal(trg_addr, 9);  //0xFF + 10 = 0x09
-    assert_int_equal(trg_addr & 0xFF00, 0);
+    assert_int_equal(cpu.abs_addr, 9);  //0xFF + 10 = 0x09
+    assert_int_equal(cpu.abs_addr & 0xFF00, 0);
 }
 
 static void get_target_address_ABS(void **state) {
@@ -275,15 +276,15 @@ static void get_target_address_ABS(void **state) {
     memory[1] = 0x22;   //low byte
     memory[2] = 0x33;   //high byte
 
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     assert_int_equal(cpu.pc, 0); 
 
-    uint16_t trg_addr = get_target_address(ABS, &cpu, &ir);
+    fetch_target_value(ABS, &cpu, &ir);
 
     assert_int_equal(cpu.pc, 3);
-    assert_int_equal(trg_addr, 0x3322);
+    assert_int_equal(cpu.abs_addr, 0x3322);
 }
 
 static void get_target_address_ABX_1(void **state) {
@@ -296,17 +297,17 @@ static void get_target_address_ABX_1(void **state) {
     memory[1] = 0x22;   //low byte
     memory[2] = 0x33;   //high byte
 
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
     
     cpu.x_reg = 0;
 
     assert_int_equal(cpu.pc, 0); 
 
-    uint16_t trg_addr = get_target_address(ABX, &cpu, &ir);
+    fetch_target_value(ABX, &cpu, &ir);
 
     assert_int_equal(cpu.pc, 3);
-    assert_int_equal(trg_addr, 0x3322);
+    assert_int_equal(cpu.abs_addr, 0x3322);
     assert_int_equal(ir.cycles, 0); //no extra cycle should be added
 }
 
@@ -320,17 +321,17 @@ static void get_target_address_ABX_2(void **state) {
     memory[1] = 0x22;   //low byte
     memory[2] = 0x33;   //high byte
 
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
     
     cpu.x_reg = 0x22;
 
     assert_int_equal(cpu.pc, 0); 
 
-    uint16_t trg_addr = get_target_address(ABX, &cpu, &ir);
+    fetch_target_value(ABX, &cpu, &ir);
 
     assert_int_equal(cpu.pc, 3);
-    assert_int_equal(trg_addr, 0x3322 + 0x22);
+    assert_int_equal(cpu.abs_addr, 0x3322 + 0x22);
     assert_int_equal(ir.cycles, 0); //no extra cycle should be added
 }
 
@@ -344,17 +345,17 @@ static void get_target_address_ABX_3(void **state) {
     memory[1] = 0xFF;   //low byte
     memory[2] = 0x33;   //high byte
 
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
     
     cpu.x_reg = 0x01;
 
     assert_int_equal(cpu.pc, 0); 
 
-    uint16_t trg_addr = get_target_address(ABX, &cpu, &ir);
+    fetch_target_value(ABX, &cpu, &ir);
 
     assert_int_equal(cpu.pc, 3);
-    assert_int_equal(trg_addr, 0x33FF + 0x01);
+    assert_int_equal(cpu.abs_addr, 0x33FF + 0x01);
     assert_int_equal(ir.cycles, 1); //extra cycle should be added
 }
 
@@ -368,16 +369,16 @@ static void get_target_address_ABY_1(void **state) {
     memory[1] = 0x22;   //low byte
     memory[2] = 0x33;   //high byte
 
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
     
     cpu.y_reg = 0;
 
     assert_int_equal(cpu.pc, 0); 
 
-    uint16_t trg_addr = get_target_address(ABY, &cpu, &ir);
+    fetch_target_value(ABY, &cpu, &ir);
     assert_int_equal(cpu.pc, 3);
-    assert_int_equal(trg_addr, 0x3322);
+    assert_int_equal(cpu.abs_addr, 0x3322);
     assert_int_equal(ir.cycles, 0); //no extra cycle should be added
 }
 
@@ -391,17 +392,17 @@ static void get_target_address_ABY_2(void **state) {
     memory[1] = 0x22;   //low byte
     memory[2] = 0x33;   //high byte
 
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
     
     cpu.y_reg = 0x22;
 
     assert_int_equal(cpu.pc, 0); 
 
-    uint16_t trg_addr = get_target_address(ABY, &cpu, &ir);
+    fetch_target_value(ABY, &cpu, &ir);
 
     assert_int_equal(cpu.pc, 3);
-    assert_int_equal(trg_addr, 0x3322 + 0x22);
+    assert_int_equal(cpu.abs_addr, 0x3322 + 0x22);
     assert_int_equal(ir.cycles, 0); //no extra cycle should be added
 }
 
@@ -415,17 +416,17 @@ static void get_target_address_ABY_3(void **state) {
     memory[1] = 0xFF;   //low byte
     memory[2] = 0x33;   //high byte
 
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
     
     cpu.y_reg = 0x01;
 
     assert_int_equal(cpu.pc, 0); 
 
-    uint16_t trg_addr = get_target_address(ABY, &cpu, &ir);
+    fetch_target_value(ABY, &cpu, &ir);
 
     assert_int_equal(cpu.pc, 3);
-    assert_int_equal(trg_addr, 0x33FF + 0x01);
+    assert_int_equal(cpu.abs_addr, 0x33FF + 0x01);
     assert_int_equal(ir.cycles, 1); //extra cycle should be added
 }
 
@@ -441,15 +442,15 @@ static void get_target_address_IND(void **state) {
 
     memory[0x3322] = 0x55;    //target address is 0x55
 
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     assert_int_equal(cpu.pc, 0); 
 
-    uint16_t trg_addr = get_target_address(IND, &cpu, &ir);
+    fetch_target_value(IND, &cpu, &ir);
 
     assert_int_equal(cpu.pc, 3);
-    assert_int_equal(trg_addr, 0x55);
+    assert_int_equal(cpu.abs_addr, 0x55);
 }
 
 static void get_target_address_IDX_1(void **state) {
@@ -462,14 +463,14 @@ static void get_target_address_IDX_1(void **state) {
     memory[1] = 0x55;   //read zero page address
     memory[0x55 + 0x35] = 0xAA;
     memory[0x55 + 0x35 + 1] = 0xBB;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.x_reg = 0x35;
     assert_int_equal(cpu.pc, 0); 
-    uint16_t trg_addr = get_target_address(IDX, &cpu, &ir);
+    fetch_target_value(IDX, &cpu, &ir);
     assert_int_equal(cpu.pc, 2);
-    assert_int_equal(trg_addr, 0xBBAA);
+    assert_int_equal(cpu.abs_addr, 0xBBAA);
 }
 
 static void get_target_address_IDX_2(void **state) {
@@ -482,14 +483,14 @@ static void get_target_address_IDX_2(void **state) {
     memory[1] = 0xFF;   //read zero page address
     memory[(0xFF + 0x35) & 0x00FF] = 0xAA;
     memory[(0xFF + 0x35 + 1) & 0x00FF] = 0xBB;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.x_reg = 0x35;
     assert_int_equal(cpu.pc, 0); 
-    uint16_t trg_addr = get_target_address(IDX, &cpu, &ir);
+    fetch_target_value(IDX, &cpu, &ir);
     assert_int_equal(cpu.pc, 2);
-    assert_int_equal(trg_addr, 0xBBAA);
+    assert_int_equal(cpu.abs_addr, 0xBBAA);
 }
 
 static void get_target_address_IDY_1(void **state) {
@@ -502,14 +503,14 @@ static void get_target_address_IDY_1(void **state) {
     memory[1] = 0x76;   //read zero page address
     memory[0x76] = 0xAA;
     memory[0x77] = 0xBB;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.y_reg = 0x35;
     assert_int_equal(cpu.pc, 0); 
-    uint16_t trg_addr = get_target_address(IDY, &cpu, &ir);
+    fetch_target_value(IDY, &cpu, &ir);
     assert_int_equal(cpu.pc, 2);
-    assert_int_equal(trg_addr, 0xBBAA + 0x35);
+    assert_int_equal(cpu.abs_addr, 0xBBAA + 0x35);
     assert_int_equal(ir.cycles, 0);
 }
 
@@ -523,14 +524,14 @@ static void get_target_address_IDY_2(void **state) {
     memory[1] = 0xFF;   //read zero page address
     memory[0xFF] = 0xAA;
     memory[0x00] = 0xBB;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.y_reg = 0x35;
     assert_int_equal(cpu.pc, 0); 
-    uint16_t trg_addr = get_target_address(IDY, &cpu, &ir);
+    fetch_target_value(IDY, &cpu, &ir);
     assert_int_equal(cpu.pc, 2);
-    assert_int_equal(trg_addr, 0xBBAA + 0x35);
+    assert_int_equal(cpu.abs_addr, 0xBBAA + 0x35);
     assert_int_equal(ir.cycles, 0);
 }
 
@@ -544,14 +545,14 @@ static void get_target_address_IDY_3(void **state) {
     memory[1] = 0xFF;   //read zero page address
     memory[0xFF] = 0xFF;
     memory[0x00] = 0xBB;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.y_reg = 0x35;
     assert_int_equal(cpu.pc, 0); 
-    uint16_t trg_addr = get_target_address(IDY, &cpu, &ir);
+    fetch_target_value(IDY, &cpu, &ir);
     assert_int_equal(cpu.pc, 2);
-    assert_int_equal(trg_addr, 0xBBFF + 0x35);
+    assert_int_equal(cpu.abs_addr, 0xBBFF + 0x35);
     assert_int_equal(ir.cycles, 1);
 }
 
@@ -566,8 +567,8 @@ static void LDA_IMM_1(void **state) {
 
     Processor cpu = {0};
     
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     assert_int_equal(cpu.status_reg, 0);
 
@@ -585,8 +586,8 @@ static void LDA_IMM_2(void **state) {
     memory[1] = 0x00;
 
     Processor cpu = {0};
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.acc = 0xFF;
 
@@ -609,8 +610,8 @@ static void LDA_ZEP_1(void **state) {
 
     Processor cpu = {0};;
     
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     assert_int_equal(cpu.status_reg, 0);
 
@@ -630,8 +631,8 @@ static void LDA_ZEP_2(void **state) {
 
     Processor cpu = {0};;
     
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.acc = 0xFF;
 
@@ -653,8 +654,8 @@ static void LDA_ZPX_1(void **state) {
 
     Processor cpu = {0};;
     
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.x_reg = 10;
 
@@ -676,8 +677,8 @@ static void LDA_ZPX_2(void **state) {
 
     Processor cpu = {0};;
     
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.x_reg = 10;
 
@@ -700,8 +701,8 @@ static void LDA_ABS_1(void **state) {
 
     Processor cpu = {0};;
     
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     assert_int_equal(cpu.status_reg, 0);
 
@@ -722,8 +723,8 @@ static void LDA_ABS_2(void **state) {
 
     Processor cpu = {0};;
     
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     assert_int_equal(cpu.status_reg, 0);
 
@@ -744,8 +745,8 @@ static void LDA_ABX_1(void **state) {
 
     Processor cpu = {0};;
     
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.x_reg = 10;
 
@@ -768,8 +769,8 @@ static void LDA_ABX_2(void **state) {
 
     Processor cpu = {0};;
     
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.x_reg = 10;
 
@@ -792,8 +793,8 @@ static void LDA_ABY_1(void **state) {
 
     Processor cpu = {0};;
     
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.y_reg = 10;
 
@@ -816,8 +817,8 @@ static void LDA_ABY_2(void **state) {
 
     Processor cpu = {0};;
     
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.y_reg = 10;
 
@@ -840,8 +841,8 @@ static void LDA_IDX_1(void **state) {
     memory[0xAABB] = 0xF0;
     Processor cpu = {0};
     
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.x_reg = 10;
 
@@ -864,8 +865,8 @@ static void LDA_IDX_2(void **state) {
     memory[0xAABB] = 0xF0;
     Processor cpu = {0};
     
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.x_reg = 10;
 
@@ -890,8 +891,8 @@ static void LDA_IDY_1(void **state) {
 
     Processor cpu = {0};
     
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.y_reg = 10;
 
@@ -915,8 +916,8 @@ static void LDA_IDY_2(void **state) {
 
     Processor cpu = {0};
     
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.pc = 5;
     cpu.y_reg = 10;
@@ -944,8 +945,8 @@ static void LDA_1(void **state) {
     Processor cpu = {0};
     memory[0] = 0xA9;
     memory[1] = 0xF0;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
     cpu_clock(&cpu);
 
     assert_int_equal(cpu.acc, 0xF0);
@@ -960,8 +961,8 @@ static void LDA_2(void **state) {
     Processor cpu = {0};
     memory[0] = 0xA9;
     memory[1] = 0x00;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
     cpu_clock(&cpu);
 
     assert_int_equal(cpu.acc, 0x00);
@@ -976,8 +977,8 @@ static void LDX_1(void **state) {
     Processor cpu = {0};
     memory[0] = 0xA2;
     memory[1] = 0xF0;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
     cpu_clock(&cpu);
 
     assert_int_equal(cpu.x_reg, 0xF0);
@@ -992,8 +993,8 @@ static void LDX_2(void **state) {
     Processor cpu = {0};
     memory[0] = 0xA2;
     memory[1] = 0x00;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
     cpu_clock(&cpu);
 
     assert_int_equal(cpu.x_reg, 0x00);
@@ -1008,8 +1009,8 @@ static void LDY_1(void **state) {
     Processor cpu = {0};
     memory[0] = 0xA0;
     memory[1] = 0xF0;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
     cpu_clock(&cpu);
 
     assert_int_equal(cpu.y_reg, 0xF0);
@@ -1024,8 +1025,8 @@ static void LDY_2(void **state) {
     Processor cpu = {0};
     memory[0] = 0xA0;
     memory[1] = 0x00;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
     cpu_clock(&cpu);
 
     assert_int_equal(cpu.y_reg, 0x00);
@@ -1040,8 +1041,8 @@ static void STA_1(void **state) {
     Processor cpu = {0};
     memory[0] = 0x85;
     memory[1] = 0x02;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.acc = 0xFF;
 
@@ -1058,8 +1059,8 @@ static void STX_1(void **state) {
     Processor cpu = {0};
     memory[0] = 0x86;
     memory[1] = 0x02;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.x_reg = 0xFF;
 
@@ -1076,8 +1077,8 @@ static void STY_1(void **state) {
     Processor cpu = {0};
     memory[0] = 0x84;
     memory[1] = 0x02;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.y_reg = 0xFF;
 
@@ -1093,8 +1094,8 @@ static void TAX_1(void **state) {
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
     Processor cpu = {0};
     memory[0] = 0xAA;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.acc = 0xFF;
 
@@ -1111,8 +1112,8 @@ static void TAY_1(void **state) {
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
     Processor cpu = {0};
     memory[0] = 0xA8;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.acc = 0xFF;
 
@@ -1129,8 +1130,8 @@ static void TSX_1(void **state) {
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
     Processor cpu = {0};
     memory[0] = 0xBA;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.sp = 0xFF;
 
@@ -1147,8 +1148,8 @@ static void TXA_1(void **state) {
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
     Processor cpu = {0};
     memory[0] = 0x8A;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.x_reg = 0xFF;
 
@@ -1165,8 +1166,8 @@ static void TXS_1(void **state) {
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
     Processor cpu = {0};
     memory[0] = 0x9A;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.x_reg = 0xFF;
 
@@ -1182,8 +1183,8 @@ static void TYA_1(void **state) {
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
     Processor cpu = {0};
     memory[0] = 0x98;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.y_reg = 0xFF;
 
@@ -1202,8 +1203,8 @@ static void ASL_1(void **state) {
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
     Processor cpu = {0};
     memory[0] = 0x0A;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.acc = 0x88;
 
@@ -1222,8 +1223,8 @@ static void LSR_1(void **state) {
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
     Processor cpu = {0};
     memory[0] = 0x4A;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.acc = 0x88;
 
@@ -1241,8 +1242,8 @@ static void LSR_2(void **state) {
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
     Processor cpu = {0};
     memory[0] = 0x4A;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.acc = 0x8F;
 
@@ -1260,8 +1261,8 @@ static void ROL_1(void **state) {
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
     Processor cpu = {0};
     memory[0] = 0x2A;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.acc = 0x88;
     setFlag('C', 0, &cpu);
@@ -1281,8 +1282,8 @@ static void ROL_2(void **state) {
     Processor cpu = {0};
     memory[0] = 0x2A;
     memory[1] = 0x2A;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.acc = 0x88;
 
@@ -1303,8 +1304,8 @@ static void ROR_1(void **state) {
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
     Processor cpu = {0};
     memory[0] = 0x6A;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.acc = 0x88;
     setFlag('C', 0, &cpu);
@@ -1324,8 +1325,8 @@ static void ROR_2(void **state) {
     Processor cpu = {0};
     memory[0] = 0x6A;
     memory[1] = 0x6A;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.acc = 0x88;
 
@@ -1349,8 +1350,8 @@ static void AND_1(void **state) {
     Processor cpu = {0};
     memory[0] = 0x29;
     memory[1] = 0x33;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.acc = 0x0F;
 
@@ -1368,8 +1369,8 @@ static void EOR_1(void **state) {
     Processor cpu = {0};
     memory[0] = 0x49;
     memory[1] = 0x22;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.acc = 0x0F;
 
@@ -1387,8 +1388,8 @@ static void ORA_1(void **state) {
     Processor cpu = {0};
     memory[0] = 0x09;
     memory[1] = 0x22;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.acc = 0x0F;
 
@@ -1405,8 +1406,8 @@ static void PHA_1(void **state) {
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
     Processor cpu = {0};
     memory[0] = 0x48;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.acc = 0x68;
     cpu.sp = 0x0F;
@@ -1423,8 +1424,8 @@ static void PHP_1(void **state) {
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0,0,0};
     Processor cpu = {0};
     memory[0] = 0x08;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
 
     cpu.status_reg = 0xCF;
     
@@ -1443,8 +1444,8 @@ static void PLA_1(void **state) {
     Processor cpu = {0};
     memory[0] = 0x68;
     memory[0x0A] = 0x12;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
     
     cpu.sp = 0x0A;
 
@@ -1461,8 +1462,8 @@ static void PLP_1(void **state) {
     Processor cpu = {0};
     memory[0] = 0x28;
     memory[0x0A] = 0xFF;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
     
     cpu.sp = 0x0A;
 
@@ -1479,8 +1480,8 @@ static void ADC_1(void **state) {
     Processor cpu = {0};
     memory[0] = 0x69;
     memory[1] = 10;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
     
     cpu.acc = 10;
 
@@ -1496,8 +1497,8 @@ static void SBC_1(void **state) {
     Processor cpu = {0};
     memory[0] = 0xE9;
     memory[1] = 5;
-    init_cpu(&cpu);
     cpu_set_memory(&cpu, memory);
+    init_cpu(&cpu);
     setFlag('C',1,&cpu);    //prepare by setting carry
     cpu.acc = 15;
 
@@ -1519,7 +1520,7 @@ static void SBC_1(void **state) {
 int main(void) {
     
     const struct CMUnitTest tests[] = {
-        //get_target_address() tests
+        //fetch_target_value() tests
         cmocka_unit_test(get_target_address_IMM_1),
         cmocka_unit_test(get_target_address_IMM_2),
         cmocka_unit_test(get_target_address_IMM_3),

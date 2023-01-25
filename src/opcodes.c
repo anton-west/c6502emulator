@@ -7,20 +7,30 @@
 #include "opcodes.h"
 #include "cpu.h"
 
-uint16_t get_target_address(address_mode mode, Processor *cpu, Ir *ir) {
+/* Sets cpu->abs_addr and cpu->fetched_value to correct values
+*/
+void fetch_target_value(address_mode mode, Processor *cpu, Ir *ir) {
     switch (mode)
     {
+    case IMP:
+        {
+            cpu->pc += 1;
+            break;
+        }
     case IMM:
         {
-            uint16_t trg_addr = cpu->pc + 1;
+            cpu->abs_addr = cpu->pc + 1;
+            cpu->fetched_value = cpu_read(cpu, cpu->abs_addr);
             cpu->pc += 2;
-            return trg_addr;
+            break;
         }
     
     case ACC:
         {
-            cpu->pc += 1;   //TODO: check if this addition should be here or is already handled during instruction fetch
-            return 0;   //return 0 but instead operate on cpu accumulator register outside this func
+            cpu->pc += 1;
+            cpu->abs_addr = 0;              //instruction will act on accumulator, abs_addr will not be touched, set to 0 to signal this
+            cpu->fetched_value = cpu->acc;
+            break;
         }
 
     case REL:
@@ -33,14 +43,18 @@ uint16_t get_target_address(address_mode mode, Processor *cpu, Ir *ir) {
             if((trg_addr & 0xFF00) != (cpu->pc & 0xFF00)) {
                 ir->cycles++;
             }
-            return (uint16_t) trg_addr;
+            cpu->abs_addr = trg_addr;
+            cpu->fetched_value = cpu_read(cpu, cpu->abs_addr);
+            break;
         }
 
     case ZPG:
         {
             uint8_t trg_addr = cpu_read(cpu, cpu->pc + 1);
             cpu->pc += 2;
-            return (uint16_t) (trg_addr & 0x00FF);
+            cpu->abs_addr = (uint16_t) (trg_addr & 0x00FF);
+            cpu->fetched_value = cpu_read(cpu, cpu->abs_addr);
+            break;
         }
 
     case ZPX:
@@ -48,7 +62,9 @@ uint16_t get_target_address(address_mode mode, Processor *cpu, Ir *ir) {
             uint16_t trg_addr = cpu_read(cpu, cpu->pc + 1);
             trg_addr = (trg_addr + cpu->x_reg) & 0x00FF;
             cpu->pc += 2;
-            return trg_addr;
+            cpu->abs_addr = trg_addr;
+            cpu->fetched_value = cpu_read(cpu, cpu->abs_addr);
+            break;
         }
 
     case ZPY:
@@ -56,7 +72,9 @@ uint16_t get_target_address(address_mode mode, Processor *cpu, Ir *ir) {
             uint16_t trg_addr = cpu_read(cpu, cpu->pc + 1);
             trg_addr = (trg_addr + cpu->y_reg) & 0x00FF;
             cpu->pc += 2;
-            return trg_addr;
+            cpu->abs_addr =  trg_addr;
+            cpu->fetched_value = cpu_read(cpu, cpu->abs_addr);
+            break;
         }
 
     case ABS:
@@ -65,7 +83,9 @@ uint16_t get_target_address(address_mode mode, Processor *cpu, Ir *ir) {
             uint16_t addr_high = cpu_read(cpu, cpu->pc + 2);
             uint16_t trg_addr = addr_low | (addr_high << 8);
             cpu->pc += 3;
-            return trg_addr;
+            cpu->abs_addr = trg_addr;
+            cpu->fetched_value = cpu_read(cpu, cpu->abs_addr);
+            break;
         }
 
     case ABX:
@@ -78,7 +98,9 @@ uint16_t get_target_address(address_mode mode, Processor *cpu, Ir *ir) {
                 ir->cycles += 1;    //extra cycle
             }
             cpu->pc += 3;
-            return trg_addr;
+            cpu->abs_addr =  trg_addr;
+            cpu->fetched_value = cpu_read(cpu, cpu->abs_addr);
+            break;
         }
 
     case ABY:
@@ -91,7 +113,9 @@ uint16_t get_target_address(address_mode mode, Processor *cpu, Ir *ir) {
                 ir->cycles += 1;    //extra cycle
             }
             cpu->pc += 3;
-            return trg_addr;
+            cpu->abs_addr =  trg_addr;
+            cpu->fetched_value = cpu_read(cpu, cpu->abs_addr);
+            break;
         }
     
     case IND:
@@ -104,7 +128,9 @@ uint16_t get_target_address(address_mode mode, Processor *cpu, Ir *ir) {
             uint16_t addr_high = cpu_read(cpu, abs_addr + 1);
             uint16_t trg_addr = addr_low + (addr_high << 8);
             cpu->pc += 3;
-            return trg_addr;
+            cpu->abs_addr =  trg_addr;
+            cpu->fetched_value = cpu_read(cpu, cpu->abs_addr);
+            break;
         }
 
     case IDX:
@@ -114,7 +140,9 @@ uint16_t get_target_address(address_mode mode, Processor *cpu, Ir *ir) {
             uint16_t addr_high = cpu_read(cpu, (addr + 1) & 0x00FF);    //stay on zero page
             uint16_t trg_addr = addr_low + (addr_high << 8);
             cpu->pc += 2;
-            return trg_addr;
+            cpu->abs_addr = trg_addr;
+            cpu->fetched_value = cpu_read(cpu, cpu->abs_addr);
+            break;
         }
     
     case IDY:
@@ -128,11 +156,13 @@ uint16_t get_target_address(address_mode mode, Processor *cpu, Ir *ir) {
                 ir->cycles += 1;    //extra cycle
             }
             cpu->pc += 2;
-            return trg_addr;
+            cpu->abs_addr = trg_addr;
+            cpu->fetched_value = cpu_read(cpu, cpu->abs_addr);
+            break;
         }
 
     default:
-        return 0;
+        break;
     }
 }
 
@@ -168,13 +198,13 @@ int I_ADC(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
-    uint8_t trg_byte = cpu_read(cpu, trg_addr);
-    uint16_t result = (uint16_t) cpu->acc + (uint16_t) trg_byte + (uint16_t) getFlag('C', cpu);
+    fetch_target_value(ir->addr_mode, cpu, ir);
+    uint16_t result = (uint16_t) cpu->acc + (uint16_t) cpu->fetched_value + (uint16_t) getFlag('C', cpu);
+    
     setFlag('C', result > 255, cpu);
     setFlag('Z', (result & 0x00FF) == 0, cpu);
     setFlag('N', result & 0x80, cpu);
-    setFlag('V', ( ( (uint16_t)cpu->acc ^ (uint16_t)result ) & ~( (uint16_t)cpu->acc ^ (uint16_t)trg_byte ) ) & 0x0080, cpu);
+    setFlag('V', ( ( (uint16_t)cpu->acc ^ (uint16_t)result ) & ~( (uint16_t)cpu->acc ^ (uint16_t)cpu->fetched_value ) ) & 0x0080, cpu);
     cpu->acc = (uint8_t) (result & 0x00FF);
 }
 int I_AND(uint8_t byte, Processor *cpu, Ir *ir) {
@@ -208,9 +238,8 @@ int I_AND(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
-    uint8_t trg_byte = cpu_read(cpu, trg_addr);
-    uint8_t and_comparison = trg_byte & cpu->acc;
+    fetch_target_value(ir->addr_mode, cpu, ir);
+    uint8_t and_comparison = cpu->fetched_value & cpu->acc;
     cpu->acc = and_comparison;
     setFlag('N', and_comparison & 0x80, cpu);
     setFlag('Z', and_comparison == 0, cpu);
@@ -235,11 +264,11 @@ int I_ASL(uint8_t byte, Processor *cpu, Ir *ir) {
         ir->addr_mode=ABX; ir->bytes=3; ir->cycles=7;
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
-    uint8_t trg_byte = (ir->addr_mode == ACC) ? cpu->acc : cpu_read(cpu, trg_addr);
-    uint8_t carry_flag_value = trg_byte & 0x80; //carry flag value is the bit that is getting shifted out
-    uint8_t new_value = trg_byte << 1;
-    if (ir->addr_mode == ACC) {cpu->acc = new_value;} else {cpu_write(cpu, trg_addr, new_value);}   
+    fetch_target_value(ir->addr_mode, cpu, ir);
+    uint8_t carry_flag_value = cpu->fetched_value & 0x80; //carry flag value is the bit that is getting shifted out
+    uint8_t new_value = cpu->fetched_value << 1;if
+    
+    (ir->addr_mode == ACC) {cpu->acc = new_value;} else {cpu_write(cpu, cpu->abs_addr, new_value);}   //TODO: fix the abs_addr writing somehow
 
     setFlag('N', new_value & 0x80, cpu);
     setFlag('Z', new_value == 0, cpu);
@@ -255,9 +284,9 @@ int I_BCC(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    fetch_target_value(ir->addr_mode, cpu, ir);
     if (getFlag('C', cpu) == 0) {
-        cpu->pc = trg_addr;
+        cpu->pc = cpu->abs_addr;
     }
 }
 int I_BCS(uint8_t byte, Processor *cpu, Ir *ir) {
@@ -270,9 +299,9 @@ int I_BCS(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    fetch_target_value(ir->addr_mode, cpu, ir);
     if (getFlag('C', cpu) == 1) {
-        cpu->pc = trg_addr;
+        cpu->pc = cpu->abs_addr;
     }
 }
 int I_BEQ(uint8_t byte, Processor *cpu, Ir *ir) {
@@ -285,9 +314,9 @@ int I_BEQ(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    fetch_target_value(ir->addr_mode, cpu, ir);
     if (getFlag('Z', cpu) == 1) {
-        cpu->pc = trg_addr;
+        cpu->pc = cpu->abs_addr;
     }
 }
 int I_BIT(uint8_t byte, Processor *cpu, Ir *ir) {
@@ -302,12 +331,11 @@ int I_BIT(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
-    uint16_t trg_addr= get_target_address(ir->addr_mode, cpu, ir);
-    uint8_t trg_byte = cpu_read(cpu, trg_addr);
+    fetch_target_value(ir->addr_mode, cpu, ir);
 
-    uint8_t result = cpu->acc & trg_byte;
-    setFlag('N', trg_byte & 0x80, cpu);
-    setFlag('V', trg_byte & 0x40, cpu);
+    uint8_t result = cpu->acc & cpu->fetched_value;
+    setFlag('N', cpu->fetched_value & 0x80, cpu);
+    setFlag('V', cpu->fetched_value & 0x40, cpu);
     setFlag('Z', result == 0, cpu);
 }
 int I_BMI(uint8_t byte, Processor *cpu, Ir *ir) {
@@ -320,9 +348,9 @@ int I_BMI(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    fetch_target_value(ir->addr_mode, cpu, ir);
     if (getFlag('N', cpu) == 1) {
-        cpu->pc = trg_addr;
+        cpu->pc = cpu->abs_addr;
     }
 }
 int I_BNE(uint8_t byte, Processor *cpu, Ir *ir) {
@@ -335,9 +363,9 @@ int I_BNE(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    fetch_target_value(ir->addr_mode, cpu, ir);
     if (getFlag('Z', cpu) == 0) {
-        cpu->pc = trg_addr;
+        cpu->pc = cpu->abs_addr;
     }
 }
 int I_BPL(uint8_t byte, Processor *cpu, Ir *ir) {
@@ -350,9 +378,9 @@ int I_BPL(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    fetch_target_value(ir->addr_mode, cpu, ir);
     if (getFlag('N', cpu) == 0) {
-        cpu->pc = trg_addr;
+        cpu->pc = cpu->abs_addr;
     }
 }
 int I_BRK(uint8_t byte, Processor *cpu, Ir *ir) {
@@ -381,9 +409,9 @@ int I_BVC(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    fetch_target_value(ir->addr_mode, cpu, ir);
     if (getFlag('V', cpu) == 0) {
-        cpu->pc = trg_addr;
+        cpu->pc = cpu->abs_addr;
     }
 }
 int I_BVS(uint8_t byte, Processor *cpu, Ir *ir) {
@@ -396,9 +424,9 @@ int I_BVS(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
+    fetch_target_value(ir->addr_mode, cpu, ir);
     if (getFlag('V', cpu) == 01) {
-        cpu->pc = trg_addr;
+        cpu->pc = cpu->abs_addr;
     }
 }
 int I_CLC(uint8_t byte, Processor *cpu, Ir *ir) {
@@ -481,12 +509,12 @@ int I_CMP(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
-    uint8_t trg_byte = cpu_read(cpu, trg_addr);
-    uint8_t cmp_result = cpu->acc - trg_byte;
+    fetch_target_value(ir->addr_mode, cpu, ir);
+    uint8_t cmp_result = cpu->acc - cpu->fetched_value;
+
     setFlag('N', cmp_result & 0x80, cpu);
-    setFlag('Z', (cpu->acc == trg_byte) ? 1 : 0, cpu);
-    setFlag('C', (cpu->acc >= trg_byte) ? 1 : 0, cpu);
+    setFlag('Z', (cpu->acc == cpu->fetched_value) ? 1 : 0, cpu);
+    setFlag('C', (cpu->acc >= cpu->fetched_value) ? 1 : 0, cpu);
 }
 int I_CPX(uint8_t byte, Processor *cpu, Ir *ir) {
     ir->opcode_mnemonic="CPX";
@@ -504,12 +532,11 @@ int I_CPX(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
-    uint8_t trg_byte = cpu_read(cpu, trg_addr);
-    uint8_t cmp_result = cpu->x_reg - trg_byte;
+    fetch_target_value(ir->addr_mode, cpu, ir);
+    uint8_t cmp_result = cpu->x_reg - cpu->fetched_value;
     setFlag('N', cmp_result & 0x80, cpu);
-    setFlag('Z', (cpu->x_reg == trg_byte) ? 1 : 0, cpu);
-    setFlag('C', (cpu->x_reg >= trg_byte) ? 1 : 0, cpu);
+    setFlag('Z', (cpu->x_reg == cpu->fetched_value) ? 1 : 0, cpu);
+    setFlag('C', (cpu->x_reg >= cpu->fetched_value) ? 1 : 0, cpu);
 }
 int I_CPY(uint8_t byte, Processor *cpu, Ir *ir) {
     ir->opcode_mnemonic="CPY";
@@ -527,12 +554,11 @@ int I_CPY(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
-    uint8_t trg_byte = cpu_read(cpu, trg_addr);
-    uint8_t cmp_result = cpu->y_reg - trg_byte;
+    fetch_target_value(ir->addr_mode, cpu, ir);
+    uint8_t cmp_result = cpu->y_reg - cpu->fetched_value;
     setFlag('N', cmp_result & 0x80, cpu);
-    setFlag('Z', (cpu->y_reg == trg_byte) ? 1 : 0, cpu);
-    setFlag('C', (cpu->y_reg >= trg_byte) ? 1 : 0, cpu);
+    setFlag('Z', (cpu->y_reg == cpu->fetched_value) ? 1 : 0, cpu);
+    setFlag('C', (cpu->y_reg >= cpu->fetched_value) ? 1 : 0, cpu);
 }
 int I_DEC(uint8_t byte, Processor *cpu, Ir *ir) {
     ir->opcode_mnemonic="DEC";
@@ -553,10 +579,9 @@ int I_DEC(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
-    uint8_t trg_byte = cpu_read(cpu, trg_addr);
-    uint8_t new_value = trg_byte - 1;
-    cpu_write(cpu, trg_addr, new_value);
+    fetch_target_value(ir->addr_mode, cpu, ir);
+    uint8_t new_value = cpu->fetched_value - 1;
+    cpu_write(cpu, cpu->abs_addr, new_value);
     setFlag('N', new_value & 0x80, cpu);
     setFlag('Z', new_value == 0, cpu);
 }
@@ -619,9 +644,8 @@ int I_EOR(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
-    uint8_t trg_byte = cpu_read(cpu, trg_addr);
-    uint8_t and_comparison = trg_byte ^ cpu->acc;
+    fetch_target_value(ir->addr_mode, cpu, ir);
+    uint8_t and_comparison = cpu->fetched_value ^ cpu->acc;
     cpu->acc = and_comparison;
     setFlag('N', and_comparison & 0x80, cpu);
     setFlag('Z', and_comparison == 0, cpu);
@@ -645,10 +669,9 @@ int I_INC(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
-    uint8_t trg_byte = cpu_read(cpu, trg_addr);
-    uint8_t new_value = trg_byte + 1;
-    cpu_write(cpu, trg_addr, new_value);
+    fetch_target_value(ir->addr_mode, cpu, ir);
+    uint8_t new_value = cpu->fetched_value + 1;
+    cpu_write(cpu, cpu->abs_addr, new_value);
     setFlag('N', new_value & 0x80, cpu);
     setFlag('Z', new_value == 0, cpu);
 }
@@ -693,8 +716,8 @@ int I_JMP(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
-    cpu->pc=trg_addr;
+    fetch_target_value(ir->addr_mode, cpu, ir);
+    cpu->pc=cpu->abs_addr;
 }
 int I_JSR(uint8_t byte, Processor *cpu, Ir *ir) {
     ir->opcode_mnemonic="JSR";
@@ -710,8 +733,8 @@ int I_JSR(uint8_t byte, Processor *cpu, Ir *ir) {
     cpu->sp--;
     cpu_write(cpu, cpu->sp, cpu->pc & 0x00FF );
     cpu->sp--;
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
-    cpu->pc=trg_addr;
+    fetch_target_value(ir->addr_mode, cpu, ir);
+    cpu->pc=cpu->abs_addr;;
 }
 int I_LDA(uint8_t byte, Processor *cpu, Ir *ir) {
     ir->opcode_mnemonic="LDA";  
@@ -744,11 +767,10 @@ int I_LDA(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
-    uint8_t trg_byte = cpu_read(cpu, trg_addr);
-    cpu->acc = trg_byte;
-    setFlag('N', trg_byte & 0x80, cpu);
-    setFlag('Z', trg_byte == 0, cpu);
+    fetch_target_value(ir->addr_mode, cpu, ir);
+    cpu->acc = cpu->fetched_value;
+    setFlag('N', cpu->fetched_value & 0x80, cpu);
+    setFlag('Z', cpu->fetched_value == 0, cpu);
 }
 int I_LDX(uint8_t byte, Processor *cpu, Ir *ir) {
     ir->opcode_mnemonic="LDX";  
@@ -770,11 +792,10 @@ int I_LDX(uint8_t byte, Processor *cpu, Ir *ir) {
         ir->addr_mode=ABY; ir->bytes=3; ir->cycles=4;
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
-    uint8_t trg_byte = cpu_read(cpu, trg_addr);
-    cpu->x_reg = trg_byte;
-    setFlag('N', trg_byte & 0x80, cpu);
-    setFlag('Z', trg_byte == 0, cpu);
+    fetch_target_value(ir->addr_mode, cpu, ir);
+    cpu->x_reg = cpu->fetched_value;
+    setFlag('N', cpu->fetched_value & 0x80, cpu);
+    setFlag('Z', cpu->fetched_value == 0, cpu);
 }
 int I_LDY(uint8_t byte, Processor *cpu, Ir *ir) {
     ir->opcode_mnemonic="LDY";  
@@ -796,11 +817,10 @@ int I_LDY(uint8_t byte, Processor *cpu, Ir *ir) {
         ir->addr_mode=ABX; ir->bytes=3; ir->cycles=4;
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
-    uint8_t trg_byte = cpu_read(cpu, trg_addr);
-    cpu->y_reg = trg_byte;
-    setFlag('N', trg_byte & 0x80, cpu);
-    setFlag('Z', trg_byte == 0, cpu);
+    fetch_target_value(ir->addr_mode, cpu, ir);
+    cpu->y_reg = cpu->fetched_value;
+    setFlag('N', cpu->fetched_value & 0x80, cpu);
+    setFlag('Z', cpu->fetched_value == 0, cpu);
 }
 int I_LSR(uint8_t byte, Processor *cpu, Ir *ir) {
     ir->opcode_mnemonic="LSR";  
@@ -822,11 +842,10 @@ int I_LSR(uint8_t byte, Processor *cpu, Ir *ir) {
         ir->addr_mode=ABX; ir->bytes=3; ir->cycles=7;
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
-    uint8_t trg_byte = (ir->addr_mode == ACC) ? cpu->acc : cpu_read(cpu, trg_addr);
-    uint8_t carry_flag_value = trg_byte & 0x01; //carry flag value is the bit that is getting shifted out
-    uint8_t new_value = trg_byte >> 1;
-    if (ir->addr_mode == ACC) {cpu->acc = new_value;} else {cpu_write(cpu, trg_addr, new_value);}   
+    fetch_target_value(ir->addr_mode, cpu, ir);
+    uint8_t carry_flag_value = cpu->fetched_value & 0x01; //carry flag value is the bit that is getting shifted out
+    uint8_t new_value = cpu->fetched_value >> 1;
+    if (ir->addr_mode == ACC) {cpu->acc = new_value;} else {cpu_write(cpu, cpu->abs_addr, new_value);}   
 
     setFlag('N', 0, cpu);
     setFlag('Z', new_value == 0, cpu);
@@ -875,12 +894,11 @@ int I_ORA(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
-    uint8_t trg_byte = cpu_read(cpu, trg_addr);
-    uint8_t and_comparison = trg_byte | cpu->acc;
-    cpu->acc = and_comparison;
-    setFlag('N', and_comparison & 0x80, cpu);
-    setFlag('Z', and_comparison == 0, cpu);
+    fetch_target_value(ir->addr_mode, cpu, ir);
+    uint8_t or_comparison = cpu->fetched_value | cpu->acc;
+    cpu->acc = or_comparison;
+    setFlag('N', or_comparison & 0x80, cpu);
+    setFlag('Z', or_comparison == 0, cpu);
 }
 int I_PHA(uint8_t byte, Processor *cpu, Ir *ir) {
     ir->opcode_mnemonic="PHA";
@@ -956,11 +974,10 @@ int I_ROL(uint8_t byte, Processor *cpu, Ir *ir) {
         ir->addr_mode=ABX; ir->bytes=3; ir->cycles=7;
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
-    uint8_t trg_byte = (ir->addr_mode == ACC) ? cpu->acc : cpu_read(cpu, trg_addr);
-    uint8_t carry_flag_value = trg_byte & 0x80; //carry flag value is the bit that is getting shifted out
-    uint8_t new_value = (trg_byte << 1) | getFlag('C', cpu); //shift left and insert old carry value
-    if (ir->addr_mode == ACC) {cpu->acc = new_value;} else {cpu_write(cpu, trg_addr, new_value);}   
+    fetch_target_value(ir->addr_mode, cpu, ir);
+    uint8_t carry_flag_value = cpu->fetched_value & 0x80; //carry flag value is the bit that is getting shifted out
+    uint8_t new_value = (cpu->fetched_value << 1) | getFlag('C', cpu); //shift left and insert old carry value
+    if (ir->addr_mode == ACC) {cpu->acc = new_value;} else {cpu_write(cpu, cpu->abs_addr, new_value);}   
 
     setFlag('N', new_value & 0x80, cpu);
     setFlag('Z', new_value == 0, cpu);
@@ -986,11 +1003,10 @@ int I_ROR(uint8_t byte, Processor *cpu, Ir *ir) {
         ir->addr_mode=ABX; ir->bytes=3; ir->cycles=7;
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
-    uint8_t trg_byte = (ir->addr_mode == ACC) ? cpu->acc : cpu_read(cpu, trg_addr);
-    uint8_t carry_flag_value = trg_byte & 0x01; //carry flag value is the bit that is getting shifted out
-    uint8_t new_value = (trg_byte >> 1) | ((trg_byte & 0x01 ) << 7); //shift right and insert bit zero on left
-    if (ir->addr_mode == ACC) {cpu->acc = new_value;} else {cpu_write(cpu, trg_addr, new_value);}   
+    fetch_target_value(ir->addr_mode, cpu, ir);
+    uint8_t carry_flag_value = cpu->fetched_value & 0x01; //carry flag value is the bit that is getting shifted out
+    uint8_t new_value = (cpu->fetched_value >> 1) | ((cpu->fetched_value & 0x01 ) << 7); //shift right and insert bit zero on left
+    if (ir->addr_mode == ACC) {cpu->acc = new_value;} else {cpu_write(cpu, cpu->abs_addr, new_value);}   
 
     setFlag('N', new_value & 0x80, cpu);
     setFlag('Z', new_value == 0, cpu);
@@ -1060,16 +1076,15 @@ int I_SBC(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
-    uint8_t trg_byte = cpu_read(cpu, trg_addr);
+    fetch_target_value(ir->addr_mode, cpu, ir);
 
-    uint16_t value_inv = ((uint16_t)trg_byte) ^ 0x00FF;
+    uint16_t value_inv = ((uint16_t)cpu->fetched_value) ^ 0x00FF;
 
     uint16_t result = (uint16_t) cpu->acc + value_inv + (uint16_t) getFlag('C', cpu);
     setFlag('C', result > 255, cpu);
     setFlag('Z', (result & 0x00FF) == 0, cpu);
     setFlag('N', result & 0x80, cpu);
-    setFlag('V', ( ( (uint16_t)cpu->acc ^ (uint16_t)result ) & ~( (uint16_t)cpu->acc ^ (uint16_t)trg_byte ) ) & 0x0080, cpu);
+    setFlag('V', ( ( (uint16_t)cpu->acc ^ (uint16_t)result ) & ~( (uint16_t)cpu->acc ^ (uint16_t)cpu->fetched_value ) ) & 0x0080, cpu);
     cpu->acc = (uint8_t) (result & 0x00FF);
 }
 int I_SEC(uint8_t byte, Processor *cpu, Ir *ir) {
@@ -1137,8 +1152,8 @@ int I_STA(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
-    cpu_write(cpu, trg_addr, cpu->acc);
+    fetch_target_value(ir->addr_mode, cpu, ir);
+    cpu_write(cpu, cpu->abs_addr, cpu->acc);
 }
 int I_STX(uint8_t byte, Processor *cpu, Ir *ir) {
     ir->opcode_mnemonic="STX";  
@@ -1156,8 +1171,8 @@ int I_STX(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
-    cpu_write(cpu, trg_addr, cpu->x_reg);
+    fetch_target_value(ir->addr_mode, cpu, ir);
+    cpu_write(cpu, cpu->abs_addr, cpu->x_reg);
 }
 int I_STY(uint8_t byte, Processor *cpu, Ir *ir) {
     ir->opcode_mnemonic="STY";  
@@ -1175,8 +1190,8 @@ int I_STY(uint8_t byte, Processor *cpu, Ir *ir) {
     default:
         break;
     }
-    uint16_t trg_addr = get_target_address(ir->addr_mode, cpu, ir);
-    cpu_write(cpu, trg_addr, cpu->y_reg);
+    fetch_target_value(ir->addr_mode, cpu, ir);
+    cpu_write(cpu, cpu->abs_addr, cpu->y_reg);
 }
 int I_TAX(uint8_t byte, Processor *cpu, Ir *ir) {
     ir->opcode_mnemonic="TAX";

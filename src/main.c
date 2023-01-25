@@ -51,10 +51,12 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    
     Processor cpu = {0};
-
-    init_cpu(&cpu);
+    
     cpu_set_memory(&cpu, memory);
+    
+    init_cpu(&cpu);
 
     start_display();
 

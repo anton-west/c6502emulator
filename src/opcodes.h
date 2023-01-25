@@ -17,7 +17,7 @@ typedef struct InstructionResult {
 typedef int (*opcode)(uint8_t byte, Processor *cpu, Ir *ir);
 
 //get address of operand
-uint16_t get_target_address(address_mode mode, Processor *cpu, Ir *ir);
+void fetch_target_value(address_mode mode, Processor *cpu, Ir *ir);
 
 //opcode declarations
 int I_ADC(uint8_t byte, Processor *cpu, Ir *ir);

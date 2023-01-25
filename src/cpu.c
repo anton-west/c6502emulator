@@ -3,15 +3,16 @@
 #include "cpu.h"
 #include "opcodes.h"
 
-void init_cpu(Processor* cpu) {
+void init_cpu(Processor *cpu) {
 
     //read pc from reset vector (FFFC LB - FFFD HB)
     uint16_t pc_low = cpu_read(cpu, 0xFFFC);
     uint16_t pc_high = cpu_read(cpu, 0xFFFD);
     cpu->pc = (pc_low & 0x00FF) | (pc_high << 8);
+    cpu->pc = 0;
     
     cpu->sp=0;
-    cpu->status_reg=0;
+    cpu->status_reg=0;    //TODO: this should go here: 0 | 0x20; is how status register is initialized on actual 6502
 
     cpu->x_reg=0;
     cpu->y_reg=0;
@@ -19,6 +20,24 @@ void init_cpu(Processor* cpu) {
     cpu->acc=0;
 
     cpu->cycles=0;
+}
+
+void reset_cpu(Processor *cpu) {
+    
+    //read pc from reset vector (FFFC LB - FFFD HB)
+    uint16_t pc_low = cpu_read(cpu, 0xFFFC);
+    uint16_t pc_high = cpu_read(cpu, 0xFFFD);
+    cpu->pc = (pc_low & 0x00FF) | (pc_high << 8);
+
+    cpu->acc = 0;
+    cpu->x_reg = 0;
+    cpu->y_reg = 0;
+
+    cpu->sp = 0xFD;
+    cpu->status_reg = 0;
+
+    //reset take 7 to 8 cycles, TODO: check exact value!
+    cpu->cycles = 8;
 }
 
 void cpu_set_memory(Processor *cpu, uint8_t *memory) {
