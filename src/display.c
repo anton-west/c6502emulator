@@ -232,8 +232,8 @@ int start_display() {
 	/* Show that box 		            */
 
     mvwprintw(stdscr, starty-3, startx, "\"SPACE\": cycle 1 instruction");
-    mvwprintw(stdscr, starty-2, startx, "\"s\": clock 1 cycle");
-    mvwprintw(stdscr, starty-1, startx, "\"q\": quit");
+    mvwprintw(stdscr, starty-2, startx, "\"s\":     clock 1 cycle");
+    mvwprintw(stdscr, starty-1, startx, "\"q\":     quit");
 
     refresh();
 
