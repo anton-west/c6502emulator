@@ -1,16 +1,39 @@
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wunused-value"
-#pragma GCC diagnostic ignored "-Wreturn-type"
+//uncomment to supress messages
+//#pragma GCC diagnostic ignored "-Wunused-parameter"
+//#pragma GCC diagnostic ignored "-Wunused-value"
+//#pragma GCC diagnostic ignored "-Wreturn-type"
 
 #include <stdio.h>
+#include <string.h>
 
 #include "opcodes.h"
 #include "cpu.h"
 
 /* Sets cpu->abs_addr and cpu->fetched_value to correct values
 */
-void fetch_target_value(address_mode mode, Processor *cpu, Ir *ir) {
-    switch (mode)
+
+/*
+void decode_instructions(Ir **ir_arr, size_t n_ir, uint8_t* mem) {
+    for (int i = 0; i < n_ir; i++) {
+        uint8_t instruction = *(mem + i);
+        opcode ptr = decode_instruction(instruction);
+
+        (ptr)(instruction, cpu, &ir);
+    }
+}
+*/
+
+
+
+
+
+
+
+
+
+
+void fetch_target_value(Processor *cpu, InstrInfo *ir) {
+    switch (ir->addr_mode)
     {
     case IMP:
         {
@@ -41,7 +64,7 @@ void fetch_target_value(address_mode mode, Processor *cpu, Ir *ir) {
             }
             uint16_t trg_addr = cpu->pc + offset + 2;
             if((trg_addr & 0xFF00) != (cpu->pc & 0xFF00)) {
-                ir->cycles++;
+                ir->n_cycles++;
             }
             cpu->abs_addr = trg_addr;
             cpu->fetched_value = cpu_read(cpu, cpu->abs_addr);
@@ -95,7 +118,7 @@ void fetch_target_value(address_mode mode, Processor *cpu, Ir *ir) {
             uint16_t temp = addr_low | (addr_high << 8);
             uint16_t trg_addr = temp + cpu->x_reg;
             if ((trg_addr & 0xFF00) != (temp & 0xFF00)) {
-                ir->cycles += 1;    //extra cycle
+                ir->n_cycles += 1;    //extra cycle
             }
             cpu->pc += 3;
             cpu->abs_addr =  trg_addr;
@@ -110,7 +133,7 @@ void fetch_target_value(address_mode mode, Processor *cpu, Ir *ir) {
             uint16_t temp = addr_low | (addr_high << 8);
             uint16_t trg_addr = temp + cpu->y_reg;
             if ((trg_addr & 0xFF00) != (temp & 0xFF00)) {
-                ir->cycles += 1;    //extra cycle
+                ir->n_cycles += 1;    //extra cycle
             }
             cpu->pc += 3;
             cpu->abs_addr =  trg_addr;
@@ -153,7 +176,7 @@ void fetch_target_value(address_mode mode, Processor *cpu, Ir *ir) {
             uint16_t temp = addr_low + (addr_high << 8);
             uint16_t trg_addr = temp + cpu->y_reg;
             if ((trg_addr & 0xFF00) != (temp & 0xFF00)) {
-                ir->cycles += 1;    //extra cycle
+                ir->n_cycles += 1;    //extra cycle
             }
             cpu->pc += 2;
             cpu->abs_addr = trg_addr;
@@ -167,38 +190,10 @@ void fetch_target_value(address_mode mode, Processor *cpu, Ir *ir) {
 }
 
 
-int I_ADC(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="ADC";
-    switch (byte)
-    {
-    case 0x69:
-        ir->addr_mode=IMM; ir->bytes=2; ir->cycles=2;
-        break;
-    case 0x65:
-        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=3;
-        break;
-    case 0x75:
-        ir->addr_mode=ZPX; ir->bytes=2; ir->cycles=4;
-        break;
-    case 0x6D:
-        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=4;
-        break;
-    case 0x7D:
-        ir->addr_mode=ABX; ir->bytes=3; ir->cycles=4;
-        break;
-    case 0x79:
-        ir->addr_mode=ABY; ir->bytes=3; ir->cycles=4;
-        break;
-    case 0x61:
-        ir->addr_mode=IDX; ir->bytes=2; ir->cycles=6;
-        break;
-    case 0x71:
-        ir->addr_mode=IDY; ir->bytes=2; ir->cycles=5;
-        break;
-    default:
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_ADC(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "ADC");
+   
+    fetch_target_value(cpu, ir);
     uint16_t result = (uint16_t) cpu->acc + (uint16_t) cpu->fetched_value + (uint16_t) getFlag('C', cpu);
     
     setFlag('C', result > 255, cpu);
@@ -207,64 +202,19 @@ int I_ADC(uint8_t byte, Processor *cpu, Ir *ir) {
     setFlag('V', ( ( (uint16_t)cpu->acc ^ (uint16_t)result ) & ~( (uint16_t)cpu->acc ^ (uint16_t)cpu->fetched_value ) ) & 0x0080, cpu);
     cpu->acc = (uint8_t) (result & 0x00FF);
 }
-int I_AND(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="AND";
-    switch (byte)
-    {
-    case 0x29:
-        ir->addr_mode=IMM; ir->bytes=2; ir->cycles=2;
-        break;
-    case 0x25:
-        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=3;
-        break;
-    case 0x35:
-        ir->addr_mode=ZPX; ir->bytes=2; ir->cycles=4;
-        break;
-    case 0x2D:
-        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=4;
-        break;
-    case 0x3D:
-        ir->addr_mode=ABX; ir->bytes=3; ir->cycles=4;
-        break;
-    case 0x39:
-        ir->addr_mode=ABY; ir->bytes=3; ir->cycles=4;
-        break;
-    case 0x21:
-        ir->addr_mode=IDX; ir->bytes=2; ir->cycles=6;
-        break;
-    case 0x31:
-        ir->addr_mode=IDY; ir->bytes=2; ir->cycles=5;
-        break;
-    default:
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_AND(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "AND");
+    
+    fetch_target_value(cpu, ir);
     uint8_t and_comparison = cpu->fetched_value & cpu->acc;
     cpu->acc = and_comparison;
     setFlag('N', and_comparison & 0x80, cpu);
     setFlag('Z', and_comparison == 0, cpu);
 }
-int I_ASL(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="ASL";  
-    switch (byte)
-    {
-    case 0x0A:
-        ir->addr_mode=ACC; ir->bytes=1; ir->cycles=2;
-        break;
-    case 0x06:
-        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=5;
-        break;
-    case 0x16:
-        ir->addr_mode=ZPX; ir->bytes=2; ir->cycles=6;
-        break;
-    case 0x0E:
-        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=6;
-        break;
-    case 0x1E:
-        ir->addr_mode=ABX; ir->bytes=3; ir->cycles=7;
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_ASL(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "ASL");  
+
+    fetch_target_value(cpu, ir);
     uint8_t carry_flag_value = cpu->fetched_value & 0x80; //carry flag value is the bit that is getting shifted out
     uint8_t new_value = cpu->fetched_value << 1;if
     
@@ -274,575 +224,213 @@ int I_ASL(uint8_t byte, Processor *cpu, Ir *ir) {
     setFlag('Z', new_value == 0, cpu);
     setFlag('C', carry_flag_value, cpu);
 }
-int I_BCC(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="BCC";
-    switch (byte)
-    {
-    case 0x90:
-        ir->addr_mode=REL; ir->bytes=2; ir->cycles=1;   //TODO: check if this should be 1 or 2, doc is confusing
-        break;
-    default:
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_BCC(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "BCC");
+    
+    fetch_target_value(cpu, ir);
     if (getFlag('C', cpu) == 0) {
         cpu->pc = cpu->abs_addr;
     }
 }
-int I_BCS(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="BCS";
-    switch (byte)
-    {
-    case 0xB0:
-        ir->addr_mode=REL; ir->bytes=2; ir->cycles=1;   //TODO: check if this should be 1 or 2, doc is confusing
-        break;
-    default:
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_BCS(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "BCS");
+    fetch_target_value(cpu, ir);
     if (getFlag('C', cpu) == 1) {
         cpu->pc = cpu->abs_addr;
     }
 }
-int I_BEQ(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="BEQ";
-    switch (byte)
-    {
-    case 0xF0:
-        ir->addr_mode=REL; ir->bytes=2; ir->cycles=1;   //TODO: check if this should be 1 or 2, doc is confusing
-        break;
-    default:
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_BEQ(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "BEQ");
+    fetch_target_value(cpu, ir);
     if (getFlag('Z', cpu) == 1) {
         cpu->pc = cpu->abs_addr;
     }
 }
-int I_BIT(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="BIT";
-    switch (byte)
-    {
-    case 0x24:
-        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=3;
-        break;
-    case 0x2C:
-        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=4;
-    default:
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_BIT(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "BIT");
+    
+    fetch_target_value(cpu, ir);
 
     uint8_t result = cpu->acc & cpu->fetched_value;
     setFlag('N', cpu->fetched_value & 0x80, cpu);
     setFlag('V', cpu->fetched_value & 0x40, cpu);
     setFlag('Z', result == 0, cpu);
 }
-int I_BMI(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="BMI";
-    switch (byte)
-    {
-    case 0x30:
-        ir->addr_mode=REL; ir->bytes=2; ir->cycles=1;   //TODO: check if this should be 1 or 2, doc is confusing
-        break;
-    default:
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_BMI(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "BMI");
+    fetch_target_value(cpu, ir);
     if (getFlag('N', cpu) == 1) {
         cpu->pc = cpu->abs_addr;
     }
 }
-int I_BNE(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="BNE";
-    switch (byte)
-    {
-    case 0xD0:
-        ir->addr_mode=REL; ir->bytes=2; ir->cycles=1;   //TODO: check if this should be 1 or 2, doc is confusing
-        break;
-    default:
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_BNE(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "BNE");
+    fetch_target_value(cpu, ir);
     if (getFlag('Z', cpu) == 0) {
         cpu->pc = cpu->abs_addr;
     }
 }
-int I_BPL(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="BPL";
-    switch (byte)
-    {
-    case 0x10:
-        ir->addr_mode=REL; ir->bytes=2; ir->cycles=1;   //TODO: check if this should be 1 or 2, doc is confusing
-        break;
-    default:
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_BPL(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "BPL");
+
+    fetch_target_value(cpu, ir);
     if (getFlag('N', cpu) == 0) {
         cpu->pc = cpu->abs_addr;
     }
 }
-int I_BRK(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="BRK";
-    switch (byte)
-    {
-    case 0x00:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=7;
-        break;
-    default:
-        break;
-    }
+void I_BRK(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "BRK");
+
     setFlag('I', 1, cpu);
     cpu_write(cpu, cpu->sp, cpu->pc+2);
     cpu->sp--;
     cpu_write(cpu, cpu->sp, cpu->status_reg);
     cpu->sp--;
 }
-int I_BVC(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="BVC";
-    switch (byte)
-    {
-    case 0x50:
-        ir->addr_mode=REL; ir->bytes=2; ir->cycles=1;   //TODO: check if this should be 1 or 2, doc is confusing
-        break;
-    default:
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_BVC(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "BVC");
+    fetch_target_value(cpu, ir);
     if (getFlag('V', cpu) == 0) {
         cpu->pc = cpu->abs_addr;
     }
 }
-int I_BVS(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="BVC";
-    switch (byte)
-    {
-    case 0x70:
-        ir->addr_mode=REL; ir->bytes=2; ir->cycles=1;   //TODO: check if this should be 1 or 2, doc is confusing
-        break;
-    default:
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_BVS(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "BVC");
+    fetch_target_value(cpu, ir);
     if (getFlag('V', cpu) == 01) {
         cpu->pc = cpu->abs_addr;
     }
 }
-int I_CLC(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="CLC";
-    switch (byte)
-    {
-    case 0x18:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
-        break;
-    default:
-        break;
-    }
+void I_CLC(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "CLC");
     cpu->pc += 1;
     setFlag('C', 0, cpu);   //clear carry
 }
-int I_CLD(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="CLD";
-    switch (byte)
-    {
-    case 0xD8:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
-        break;
-    default:
-        break;
-    }
+void I_CLD(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "CLD");
     setFlag('D', 0, cpu);   //clear decimal
 }
-int I_CLI(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="CLI";
-    switch (byte)
-    {
-    case 0x58:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
-        break;
-    default:
-        break;
-    }
+void I_CLI(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "CLI");
     setFlag('I', 0, cpu);   //clear interrupt disable
 }
-int I_CLV(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="CLV";
-    switch (byte)
-    {
-    case 0xB8:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
-        break;
-    default:
-        break;
-    }
+void I_CLV(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "CLV");
     setFlag('V', 0, cpu);   //clear overflow
 }
-int I_CMP(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="CMP";
-    switch (byte)
-    {
-    case 0xC9:
-        ir->addr_mode=IMM; ir->bytes=2; ir->cycles=2;
-        break;
-    case 0xC5:
-        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=3;
-        break;
-    case 0xD5:
-        ir->addr_mode=ZPX; ir->bytes=2; ir->cycles=4;
-        break;
-    case 0xCD:
-        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=4;
-        break;
-    case 0xDD:
-        ir->addr_mode=ABX; ir->bytes=3; ir->cycles=4;
-        break;
-    case 0xD9:
-        ir->addr_mode=ABY; ir->bytes=3; ir->cycles=4;
-        break;
-    case 0xC1:
-        ir->addr_mode=IDX; ir->bytes=2; ir->cycles=6;
-        break;
-    case 0xD1:
-        ir->addr_mode=IDY; ir->bytes=2; ir->cycles=5;
-        break;
-    default:
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_CMP(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "CMP");
+    fetch_target_value(cpu, ir);
     uint8_t cmp_result = cpu->acc - cpu->fetched_value;
 
     setFlag('N', cmp_result & 0x80, cpu);
     setFlag('Z', (cpu->acc == cpu->fetched_value) ? 1 : 0, cpu);
     setFlag('C', (cpu->acc >= cpu->fetched_value) ? 1 : 0, cpu);
 }
-int I_CPX(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="CPX";
-    switch (byte)
-    {
-    case 0xE0:
-        ir->addr_mode=IMM; ir->bytes=2; ir->cycles=2;
-        break;
-    case 0xE4:
-        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=3;
-        break;
-    case 0xEC:
-        ir->addr_mode=ABS; ir->bytes=2; ir->cycles=4;
-        break;
-    default:
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_CPX(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "CPX");
+    fetch_target_value(cpu, ir);
     uint8_t cmp_result = cpu->x_reg - cpu->fetched_value;
     setFlag('N', cmp_result & 0x80, cpu);
     setFlag('Z', (cpu->x_reg == cpu->fetched_value) ? 1 : 0, cpu);
     setFlag('C', (cpu->x_reg >= cpu->fetched_value) ? 1 : 0, cpu);
 }
-int I_CPY(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="CPY";
-    switch (byte)
-    {
-    case 0xC0:
-        ir->addr_mode=IMM; ir->bytes=2; ir->cycles=2;
-        break;
-    case 0xC4:
-        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=3;
-        break;
-    case 0xCC:
-        ir->addr_mode=ABS; ir->bytes=2; ir->cycles=4;
-        break;
-    default:
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_CPY(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "CPY");
+    fetch_target_value(cpu, ir);
     uint8_t cmp_result = cpu->y_reg - cpu->fetched_value;
     setFlag('N', cmp_result & 0x80, cpu);
     setFlag('Z', (cpu->y_reg == cpu->fetched_value) ? 1 : 0, cpu);
     setFlag('C', (cpu->y_reg >= cpu->fetched_value) ? 1 : 0, cpu);
 }
-int I_DEC(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="DEC";
-    switch (byte)
-    {
-    case 0xC6:
-        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=5;
-        break;
-    case 0xD6:
-        ir->addr_mode=ZPX; ir->bytes=2; ir->cycles=6;
-        break;
-    case 0xCE:
-        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=6;
-        break;
-    case 0xDE:
-        ir->addr_mode=ABX; ir->bytes=3; ir->cycles=7;
-        break;
-    default:
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_DEC(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "DEC");
+
+    fetch_target_value(cpu, ir);
     uint8_t new_value = cpu->fetched_value - 1;
     cpu_write(cpu, cpu->abs_addr, new_value);
     setFlag('N', new_value & 0x80, cpu);
     setFlag('Z', new_value == 0, cpu);
 }
-int I_DEX(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="DEX";
-    switch (byte)
-    {
-    case 0xCA:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
-        break;
-    default:
-        break;
-    }
+void I_DEX(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "DEX");
     cpu->x_reg--;
     setFlag('N', cpu->x_reg & 0x80, cpu);
     setFlag('Z', cpu->x_reg == 0, cpu);
 }
-int I_DEY(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="DEY";
-    switch (byte)
-    {
-    case 0x88:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
-        break;
-    default:
-        break;
-    }
+void I_DEY(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "DEY");
     cpu->y_reg--;
     setFlag('N', cpu->y_reg & 0x80, cpu);
     setFlag('Z', cpu->y_reg == 0, cpu);
 }
-int I_EOR(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="EOR";
-    switch (byte)
-    {
-    case 0x49:
-        ir->addr_mode=IMM; ir->bytes=2; ir->cycles=2;
-        break;
-    case 0x45:
-        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=3;
-        break;
-    case 0x55:
-        ir->addr_mode=ZPX; ir->bytes=2; ir->cycles=4;
-        break;
-    case 0x4D:
-        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=4;
-        break;
-    case 0x5D:
-        ir->addr_mode=ABX; ir->bytes=3; ir->cycles=4;
-        break;
-    case 0x59:
-        ir->addr_mode=ABY; ir->bytes=3; ir->cycles=4;
-        break;
-    case 0x41:
-        ir->addr_mode=IDX; ir->bytes=2; ir->cycles=6;
-        break;
-    case 0x51:
-        ir->addr_mode=IDY; ir->bytes=2; ir->cycles=5;
-        break;
-    default:
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_EOR(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "EOR");
+    fetch_target_value(cpu, ir);
     uint8_t and_comparison = cpu->fetched_value ^ cpu->acc;
     cpu->acc = and_comparison;
     setFlag('N', and_comparison & 0x80, cpu);
     setFlag('Z', and_comparison == 0, cpu);
 }
-int I_INC(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="INC";
-    switch (byte)
-    {
-    case 0xE6:
-        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=5;
-        break;
-    case 0xF6:
-        ir->addr_mode=ZPX; ir->bytes=2; ir->cycles=6;
-        break;
-    case 0xEE:
-        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=6;
-        break;
-    case 0xFE:
-        ir->addr_mode=ABX; ir->bytes=3; ir->cycles=7;
-        break;
-    default:
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_INC(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "INC");
+    fetch_target_value(cpu, ir);
     uint8_t new_value = cpu->fetched_value + 1;
     cpu_write(cpu, cpu->abs_addr, new_value);
     setFlag('N', new_value & 0x80, cpu);
     setFlag('Z', new_value == 0, cpu);
 }
-int I_INX(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="INX";
-    switch (byte)
-    {
-    case 0xE8:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
-        break;
-    default:
-        break;
-    }
+void I_INX(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "INX");
     cpu->x_reg++;
     setFlag('N', cpu->x_reg & 0x80, cpu);
     setFlag('Z', cpu->x_reg == 0, cpu);
 }
-int I_INY(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="INY";
-    switch (byte)
-    {
-    case 0xC8:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
-        break;
-    default:
-        break;
-    }
+void I_INY(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "INY");
     cpu->y_reg++;
     setFlag('N', cpu->y_reg & 0x80, cpu);
     setFlag('Z', cpu->y_reg == 0, cpu);
 }
-int I_JMP(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="JMP";
-    switch (byte)
-    {
-    case 0x4C:
-        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=3;
-        break;
-    case 0x6C:
-        ir->addr_mode=IND; ir->bytes=3; ir->cycles=5;
-        break;
-    default:
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_JMP(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "JMP");
+    fetch_target_value(cpu, ir);
     cpu->pc=cpu->abs_addr;
 }
-int I_JSR(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="JSR";
-    switch (byte)
-    {
-    case 0x20:
-        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=6;
-        break;
-    default:
-        break;
-    }
+void I_JSR(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "JSR");
     cpu_write(cpu, cpu->sp, (cpu->pc >> 8) & 0x00FF );
     cpu->sp--;
     cpu_write(cpu, cpu->sp, cpu->pc & 0x00FF );
     cpu->sp--;
-    fetch_target_value(ir->addr_mode, cpu, ir);
+    fetch_target_value(cpu, ir);
     cpu->pc=cpu->abs_addr;;
 }
-int I_LDA(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="LDA";  
-    switch (byte)
-    {
-    case 0xA9:
-        ir->addr_mode=IMM; ir->bytes=2; ir->cycles=2;
-        break;
-    case 0xA5:
-        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=3;
-        break;
-    case 0xB5:
-        ir->addr_mode=ZPX; ir->bytes=2; ir->cycles=4;
-        break;
-    case 0xAD:
-        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=4;
-        break;
-    case 0xBD:
-        ir->addr_mode=ABX; ir->bytes=3; ir->cycles=4;
-        break;
-    case 0xB9:
-        ir->addr_mode=ABY; ir->bytes=3; ir->cycles=4;
-        break;
-    case 0xA1:
-        ir->addr_mode=IDX; ir->bytes=2; ir->cycles=6;
-        break;
-    case 0xB1:
-        ir->addr_mode=IDY; ir->bytes=2; ir->cycles=5;
-        break;
-    default:
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_LDA(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "LDA");  
+    fetch_target_value(cpu, ir);
     cpu->acc = cpu->fetched_value;
     setFlag('N', cpu->fetched_value & 0x80, cpu);
     setFlag('Z', cpu->fetched_value == 0, cpu);
 }
-int I_LDX(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="LDX";  
-    switch (byte)
-    {
-    case 0xA2:
-        ir->addr_mode=IMM; ir->bytes=2; ir->cycles=2;
-        break;
-    case 0xA6:
-        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=3;
-        break;
-    case 0xB6:
-        ir->addr_mode=ZPY; ir->bytes=2; ir->cycles=4;
-        break;
-    case 0xAE:
-        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=4;
-        break;
-    case 0xBE:
-        ir->addr_mode=ABY; ir->bytes=3; ir->cycles=4;
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_LDX(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "LDX");  
+    fetch_target_value(cpu, ir);
     cpu->x_reg = cpu->fetched_value;
     setFlag('N', cpu->fetched_value & 0x80, cpu);
     setFlag('Z', cpu->fetched_value == 0, cpu);
 }
-int I_LDY(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="LDY";  
-    switch (byte)
-    {
-    case 0xA0:
-        ir->addr_mode=IMM; ir->bytes=2; ir->cycles=2;
-        break;
-    case 0xA4:
-        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=3;
-        break;
-    case 0xB4:
-        ir->addr_mode=ZPX; ir->bytes=2; ir->cycles=4;
-        break;
-    case 0xAC:
-        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=4;
-        break;
-    case 0xBC:
-        ir->addr_mode=ABX; ir->bytes=3; ir->cycles=4;
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_LDY(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "LDY");  
+    fetch_target_value(cpu, ir);
     cpu->y_reg = cpu->fetched_value;
     setFlag('N', cpu->fetched_value & 0x80, cpu);
     setFlag('Z', cpu->fetched_value == 0, cpu);
 }
-int I_LSR(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="LSR";  
-    switch (byte)
-    {
-    case 0x4A:
-        ir->addr_mode=ACC; ir->bytes=1; ir->cycles=2;
-        break;
-    case 0x46:
-        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=5;
-        break;
-    case 0x56:
-        ir->addr_mode=ZPX; ir->bytes=2; ir->cycles=6;
-        break;
-    case 0x4E:
-        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=6;
-        break;
-    case 0x5E:
-        ir->addr_mode=ABX; ir->bytes=3; ir->cycles=7;
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_LSR(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "LSR");  
+
+    fetch_target_value(cpu, ir);
     uint8_t carry_flag_value = cpu->fetched_value & 0x01; //carry flag value is the bit that is getting shifted out
     uint8_t new_value = cpu->fetched_value >> 1;
     if (ir->addr_mode == ACC) {cpu->acc = new_value;} else {cpu_write(cpu, cpu->abs_addr, new_value);}   
@@ -851,130 +439,43 @@ int I_LSR(uint8_t byte, Processor *cpu, Ir *ir) {
     setFlag('Z', new_value == 0, cpu);
     setFlag('C', carry_flag_value, cpu);
 }
-int I_NOP(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="NOP";
-    switch (byte)
-    {
-    case 0xEA:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
-        break;
-    default:
-        break;
-    }
+void I_NOP(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "NOP");
     cpu->pc++;
 }
-int I_ORA(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="ORA";
-    switch (byte)
-    {
-    case 0x09:
-        ir->addr_mode=IMM; ir->bytes=2; ir->cycles=2;
-        break;
-    case 0x05:
-        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=3;
-        break;
-    case 0x15:
-        ir->addr_mode=ZPX; ir->bytes=2; ir->cycles=4;
-        break;
-    case 0x0D:
-        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=4;
-        break;
-    case 0x1D:
-        ir->addr_mode=ABX; ir->bytes=3; ir->cycles=4;
-        break;
-    case 0x19:
-        ir->addr_mode=ABY; ir->bytes=3; ir->cycles=4;
-        break;
-    case 0x01:
-        ir->addr_mode=IDX; ir->bytes=2; ir->cycles=6;
-        break;
-    case 0x11:
-        ir->addr_mode=IDY; ir->bytes=2; ir->cycles=5;
-        break;
-    default:
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_ORA(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "ORA");
+    fetch_target_value(cpu, ir);
     uint8_t or_comparison = cpu->fetched_value | cpu->acc;
     cpu->acc = or_comparison;
     setFlag('N', or_comparison & 0x80, cpu);
     setFlag('Z', or_comparison == 0, cpu);
 }
-int I_PHA(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="PHA";
-    switch (byte)
-    {
-    case 0x48:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=3;
-        break;
-    default:
-        break;
-    }
+void I_PHA(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "PHA");
     cpu_write(cpu, (uint16_t)cpu->sp, cpu->acc);
     cpu->sp--;
 }
-int I_PHP(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="PHP";
-    switch (byte)
-    {
-    case 0x08:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=3;
-        break;
-    default:
-        break;
-    }
+void I_PHP(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "PHP");
     cpu_write(cpu, (uint16_t)cpu->sp, cpu->status_reg | 0x30);
     cpu->sp--;
 }
-int I_PLA(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="PLA";
-    switch (byte)
-    {
-    case 0x68:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=4;
-        break;
-    default:
-        break;
-    }
+void I_PLA(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "PLA");
     cpu->acc = cpu_read(cpu, (uint16_t)cpu->sp);
     cpu->sp++;
     setFlag('N', cpu->acc & 0x80, cpu);
     setFlag('Z', cpu->acc == 0, cpu);
 }
-int I_PLP(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="PHP";
-    switch (byte)
-    {
-    case 0x28:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=3;
-        break;
-    default:
-        break;
-    }
+void I_PLP(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "PHP");
     cpu->status_reg = cpu_read(cpu, (uint16_t)cpu->sp) & 0xCF;
     cpu->sp++;
 }
-int I_ROL(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="ROL";  
-    switch (byte)
-    {
-    case 0x2A:
-        ir->addr_mode=ACC; ir->bytes=1; ir->cycles=2;
-        break;
-    case 0x26:
-        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=5;
-        break;
-    case 0x36:
-        ir->addr_mode=ZPX; ir->bytes=2; ir->cycles=6;
-        break;
-    case 0x2E:
-        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=6;
-        break;
-    case 0x3E:
-        ir->addr_mode=ABX; ir->bytes=3; ir->cycles=7;
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_ROL(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "ROL");  
+    fetch_target_value(cpu, ir);
     uint8_t carry_flag_value = cpu->fetched_value & 0x80; //carry flag value is the bit that is getting shifted out
     uint8_t new_value = (cpu->fetched_value << 1) | getFlag('C', cpu); //shift left and insert old carry value
     if (ir->addr_mode == ACC) {cpu->acc = new_value;} else {cpu_write(cpu, cpu->abs_addr, new_value);}   
@@ -983,27 +484,9 @@ int I_ROL(uint8_t byte, Processor *cpu, Ir *ir) {
     setFlag('Z', new_value == 0, cpu);
     setFlag('C', carry_flag_value, cpu);    //set shifted out bit as new carry
 }  
-int I_ROR(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="ROR";  
-    switch (byte)
-    {
-    case 0x6A:
-        ir->addr_mode=ACC; ir->bytes=1; ir->cycles=2;
-        break;
-    case 0x66:
-        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=5;
-        break;
-    case 0x76:
-        ir->addr_mode=ZPX; ir->bytes=2; ir->cycles=6;
-        break;
-    case 0x6E:
-        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=6;
-        break;
-    case 0x7E:
-        ir->addr_mode=ABX; ir->bytes=3; ir->cycles=7;
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_ROR(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "ROR");  
+    fetch_target_value(cpu, ir);
     uint8_t carry_flag_value = cpu->fetched_value & 0x01; //carry flag value is the bit that is getting shifted out
     uint8_t new_value = (cpu->fetched_value >> 1) | ((cpu->fetched_value & 0x01 ) << 7); //shift right and insert bit zero on left
     if (ir->addr_mode == ACC) {cpu->acc = new_value;} else {cpu_write(cpu, cpu->abs_addr, new_value);}   
@@ -1012,31 +495,15 @@ int I_ROR(uint8_t byte, Processor *cpu, Ir *ir) {
     setFlag('Z', new_value == 0, cpu);
     setFlag('C', carry_flag_value, cpu);    //set shifted out bit as new carry}
 }
-int I_RTI(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="RTI";
-    switch (byte)
-    {
-    case 0x40:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=6;
-        break;
-    default:
-        break;
-    }
+void I_RTI(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "RTI");
     cpu->sp++;
     cpu->status_reg = cpu_read(cpu, cpu->sp) & 0xCB;    //interrupt flag ignored and b flags
     cpu->sp++;
     cpu->pc = cpu_read(cpu, cpu->sp);
 }
-int I_RTS(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="RTS";
-    switch (byte)
-    {
-    case 0x60:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=6;
-        break;
-    default:
-        break;
-    }
+void I_RTS(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "RTS");
     cpu->sp++;
     uint16_t low_byte = cpu_read(cpu, cpu->sp);
     uint16_t high_byte = cpu_read(cpu, cpu->sp);
@@ -1045,38 +512,9 @@ int I_RTS(uint8_t byte, Processor *cpu, Ir *ir) {
     cpu->pc=trg_addr;
     cpu->pc++;
 }
-int I_SBC(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="SBC";
-    switch (byte)
-    {
-    case 0xE9:
-        ir->addr_mode=IMM; ir->bytes=2; ir->cycles=2;
-        break;
-    case 0xE5:
-        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=3;
-        break;
-    case 0xF5:
-        ir->addr_mode=ZPX; ir->bytes=2; ir->cycles=4;
-        break;
-    case 0xED:
-        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=4;
-        break;
-    case 0xFD:
-        ir->addr_mode=ABX; ir->bytes=3; ir->cycles=4;
-        break;
-    case 0xF9:
-        ir->addr_mode=ABY; ir->bytes=3; ir->cycles=4;
-        break;
-    case 0xE1:
-        ir->addr_mode=IDX; ir->bytes=2; ir->cycles=6;
-        break;
-    case 0xF1:
-        ir->addr_mode=IDY; ir->bytes=2; ir->cycles=5;
-        break;
-    default:
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_SBC(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "SBC");
+    fetch_target_value(cpu, ir);
 
     uint16_t value_inv = ((uint16_t)cpu->fetched_value) ^ 0x00FF;
 
@@ -1087,196 +525,80 @@ int I_SBC(uint8_t byte, Processor *cpu, Ir *ir) {
     setFlag('V', ( ( (uint16_t)cpu->acc ^ (uint16_t)result ) & ~( (uint16_t)cpu->acc ^ (uint16_t)cpu->fetched_value ) ) & 0x0080, cpu);
     cpu->acc = (uint8_t) (result & 0x00FF);
 }
-int I_SEC(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="SEC";
-    switch (byte)
-    {
-    case 0x38:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
-        break;
-    default:
-        break;
-    }
+void I_SEC(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "SEC");
     cpu->pc += 1;
     setFlag('C', 1, cpu);   //set carry bit
 }
-int I_SED(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="SED";
-    switch (byte)
-    {
-    case 0xF8:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
-        break;
-    default:
-        break;
-    }
+void I_SED(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "SED");
     setFlag('D', 1, cpu);   //set decimal bit
 }
-int I_SEI(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="SEI";
-    switch (byte)
-    {
-    case 0x78:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
-        break;
-    default:
-        break;
-    }
+void I_SEI(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "SEI");
     setFlag('I', 1, cpu);   //set interrupt disable bit
 }
-int I_STA(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="STA";  
-    switch (byte)
-    {
-    case 0x85:
-        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=3;
-        break;
-    case 0x95:
-        ir->addr_mode=ZPX; ir->bytes=2; ir->cycles=4;
-        break;
-    case 0x8D:
-        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=4;
-        break;
-    case 0x9D:
-        ir->addr_mode=ABX; ir->bytes=3; ir->cycles=5;
-        break;
-    case 0x99:
-        ir->addr_mode=ABY; ir->bytes=3; ir->cycles=5;
-        break;
-    case 0x81:
-        ir->addr_mode=IDX; ir->bytes=2; ir->cycles=6;
-        break;
-    case 0x91:
-        ir->addr_mode=IDY; ir->bytes=2; ir->cycles=6;
-        break;
-    default:
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_STA(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "STA");  
+    fetch_target_value(cpu, ir);
     cpu_write(cpu, cpu->abs_addr, cpu->acc);
 }
-int I_STX(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="STX";  
-    switch (byte)
-    {
-    case 0x86:
-        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=3;
-        break;
-    case 0x96:
-        ir->addr_mode=ZPY; ir->bytes=2; ir->cycles=4;
-        break;
-    case 0x8E:
-        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=4;
-        break;
-    default:
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_STX(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "STX");  
+    fetch_target_value(cpu, ir);
     cpu_write(cpu, cpu->abs_addr, cpu->x_reg);
 }
-int I_STY(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="STY";  
-    switch (byte)
-    {
-    case 0x84:
-        ir->addr_mode=ZPG; ir->bytes=2; ir->cycles=3;
-        break;
-    case 0x94:
-        ir->addr_mode=ZPX; ir->bytes=2; ir->cycles=4;
-        break;
-    case 0x8C:
-        ir->addr_mode=ABS; ir->bytes=3; ir->cycles=4;
-        break;
-    default:
-        break;
-    }
-    fetch_target_value(ir->addr_mode, cpu, ir);
+void I_STY(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "STY");  
+    fetch_target_value(cpu, ir);
     cpu_write(cpu, cpu->abs_addr, cpu->y_reg);
 }
-int I_TAX(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="TAX";
-    switch (byte)
-    {
-    case 0xAA:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
-        break;
-    default:
-        break;
-    }
+void I_TAX(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "TAX");
+
     cpu->x_reg = cpu->acc;
     setFlag('N', cpu->x_reg & 0x80, cpu);
     setFlag('Z', cpu->x_reg == 0, cpu);
 }
-int I_TAY(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="TAY";
-    switch (byte)
-    {
-    case 0xA8:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
-        break;
-    default:
-        break;
-    }
+void I_TAY(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "TAY");
+
     cpu->y_reg = cpu->acc;
     setFlag('N', cpu->y_reg & 0x80, cpu);
     setFlag('Z', cpu->y_reg == 0, cpu);
 }
-int I_TSX(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="TSX";
-    switch (byte)
-    {
-    case 0xBA:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
-        break;
-    default:
-        break;
-    }
+void I_TSX(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "TSX");
+
     cpu->x_reg = cpu->sp;
     setFlag('N', cpu->x_reg & 0x80, cpu);
     setFlag('Z', cpu->x_reg == 0, cpu);
 }
-int I_TXA(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="TXA";
-    switch (byte)
-    {
-    case 0x8A:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
-        break;
-    default:
-        break;
-    }
+void I_TXA(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "TXA");
+
     cpu->acc = cpu->x_reg;
     setFlag('N', cpu->x_reg & 0x80, cpu);
     setFlag('Z', cpu->x_reg == 0, cpu);
 }
-int I_TXS(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="TXS";
-    switch (byte)
-    {
-    case 0x9A:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
-        break;
-    default:
-        break;
-    }
+void I_TXS(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "TXS");
+
     cpu->sp = cpu->x_reg;
 }
-int I_TYA(uint8_t byte, Processor *cpu, Ir *ir) {
-    ir->opcode_mnemonic="TYA";
-    switch (byte)
-    {
-    case 0x98:
-        ir->addr_mode=IMP; ir->bytes=1; ir->cycles=2;
-        break;
-    default:
-        break;
-    }
+void I_TYA(Processor *cpu, InstrInfo *ir) {
+    strcpy(ir->opcode_mnemonic, "TYA");
+
     cpu->acc = cpu->y_reg;
     setFlag('N', cpu->y_reg & 0x80, cpu);
     setFlag('Z', cpu->y_reg == 0, cpu);
 }
 
-int U_DEF(uint8_t byte, Processor *cpu, Ir *ir) { ir; }
+void U_DEF(Processor *cpu, InstrInfo *ir) {
+    //do nothing
+    strcpy(ir->opcode_mnemonic, "UDF");
+    cpu->acc=cpu->acc;
+}
 
 opcode opcode_matrix[] = {          I_BRK, I_ORA, U_DEF, U_DEF,     U_DEF, I_ORA, I_ASL, U_DEF,     I_PHP, I_ORA, I_ASL, U_DEF,     U_DEF, I_ORA, I_ASL, U_DEF,
                                     I_BPL, I_ORA, U_DEF, U_DEF,     U_DEF, I_ORA, I_ASL, U_DEF,     I_CLC, I_ORA, U_DEF, U_DEF,     U_DEF, I_ORA, I_ASL, U_DEF,
@@ -1296,10 +618,97 @@ opcode opcode_matrix[] = {          I_BRK, I_ORA, U_DEF, U_DEF,     U_DEF, I_ORA
                                     I_CPY, I_CMP, U_DEF, U_DEF,     I_CPY, I_CMP, I_DEC, U_DEF,     I_INY, I_CMP, I_DEX, U_DEF,     I_CPY, I_CMP, I_DEC, U_DEF,
                                     I_BNE, I_CMP, U_DEF, U_DEF,     U_DEF, I_CMP, I_DEC, U_DEF,     I_CLD, I_CMP, U_DEF, U_DEF,     U_DEF, I_CMP, I_DEC, U_DEF,
                                     I_CPX, I_SBC, U_DEF, U_DEF,     I_CPX, I_SBC, I_INC, U_DEF,     I_INX, I_SBC, I_NOP, U_DEF,     I_CPX, I_SBC, I_INC, U_DEF,
-                                    I_BEQ, I_SBC, U_DEF, U_DEF,     U_DEF, I_SBC, I_INC, U_DEF,     I_SED, I_SBC, U_DEF, U_DEF,     U_DEF, I_SBC, I_INC, U_DEF  };
+                                    I_BEQ, I_SBC, U_DEF, U_DEF,     U_DEF, I_SBC, I_INC, U_DEF,     I_SED, I_SBC, U_DEF, U_DEF,     U_DEF, I_SBC, I_INC, U_DEF,  };                      
 
-//struct Instruction_info opcode_matrix[] = { (II){I_BRK, IMP, 1, 7}, (II){I_ORA, XIN, 2, 6}, (II){U_DEF, UDF, 0, 0}, (II){U_DEF, UDF, 0, 0}, (II){U_DEF, UDF, 0, 0}};
+address_mode address_mode_matrix[] = {  IMP,IDX,UDF,UDF,    UDF,ZPG,ZPG,UDF,    IMP,IMM,ACC,UDF,    UDF,ABS,ABS,UDF,
+                                        REL,IDY,UDF,UDF,    UDF,ZPX,ZPX,UDF,    IMP,ABY,UDF,UDF,    UDF,ABX,ABX,UDF,
+                                        ABS,IDX,UDF,UDF,    ZPG,ZPG,ZPG,UDF,    IMP,IMM,ACC,UDF,    ABS,ABS,ABS,UDF,
+                                        REL,IDY,UDF,UDF,    UDF,ZPX,ZPX,UDF,    IMP,ABY,UDF,UDF,    UDF,ABX,ABX,UDF,
+                                        
+                                        IMP,IDX,UDF,UDF,    UDF,ZPG,ZPG,UDF,    IMP,IMM,ACC,UDF,    ABS,ABS,ABS,UDF,
+                                        REL,IDY,UDF,UDF,    UDF,ZPX,ZPX,UDF,    IMP,ABY,UDF,UDF,    UDF,ABX,ABX,UDF,
+                                        IMP,IDX,UDF,UDF,    UDF,ZPG,ZPG,UDF,    IMP,IMM,ACC,UDF,    IND,ABS,ABS,UDF,
+                                        REL,IDY,UDF,UDF,    UDF,ZPX,ZPX,UDF,    IMP,ABY,UDF,UDF,    UDF,ABX,ABX,UDF,
+                                        
+                                        UDF,IDX,UDF,UDF,    ZPG,ZPG,ZPG,UDF,    IMP,UDF,IMP,UDF,    ABS,ABS,ABS,UDF,
+                                        REL,IDY,UDF,UDF,    ZPX,ZPX,ZPY,UDF,    IMP,ABY,IMP,UDF,    UDF,ABX,UDF,UDF,
+                                        IMM,IDX,IMM,UDF,    ZPG,ZPG,ZPG,UDF,    IMP,IMM,IMP,UDF,    ABS,ABS,ABS,UDF,
+                                        REL,IDY,UDF,UDF,    ZPX,ZPX,ZPY,UDF,    IMP,ABY,IMP,UDF,    ABX,ABX,ABY,UDF,
+                                        
+                                        IMM,IDX,UDF,UDF,    ZPG,ZPG,ZPG,UDF,    IMP,IMM,IMP,UDF,    ABS,ABS,ABS,UDF,
+                                        REL,IDY,UDF,UDF,    UDF,ZPX,ZPX,UDF,    IMP,ABY,UDF,UDF,    UDF,ABX,ABX,UDF,
+                                        IMM,IDX,UDF,UDF,    ZPG,ZPG,ZPG,UDF,    IMP,IMM,IMP,UDF,    ABS,ABS,ABS,UDF,
+                                        REL,IDY,UDF,UDF,    UDF,ZPX,ZPX,UDF,    IMP,ABY,UDF,UDF,    UDF,ABX,ABX,UDF,    };
 
-opcode decode_instruction(uint8_t byte) {
-    return opcode_matrix[ byte ];
+unsigned int byte_matrix[] = {  1,2,0,0,    0,2,2,0,    1,2,1,0,    0,3,3,0,
+                                2,2,0,0,    0,2,2,0,    1,3,0,0,    0,3,3,0,
+                                3,2,0,0,    2,2,2,0,    1,2,1,0,    3,3,3,0,
+                                2,2,0,0,    0,2,2,0,    1,3,0,0,    0,3,3,0,
+                                
+                                1,2,0,0,    0,2,2,0,    1,2,1,0,    3,3,3,0,
+                                2,2,0,0,    0,2,2,0,    1,3,0,0,    0,3,3,0,
+                                1,2,0,0,    0,2,2,0,    1,2,1,0,    3,3,3,0,
+                                2,2,0,0,    0,2,2,0,    1,3,0,0,    0,3,3,0,
+                                
+                                0,2,0,0,    2,2,2,0,    1,0,1,0,    3,3,3,0,
+                                2,2,0,0,    2,2,2,0,    1,3,1,0,    0,3,0,0,
+                                2,2,2,0,    2,2,2,0,    1,2,1,0,    3,3,3,0,
+                                2,2,0,0,    2,2,2,0,    1,3,1,0,    3,3,3,0,
+                                
+                                2,2,0,0,    2,2,2,0,    1,2,1,0,    3,3,3,0,
+                                2,2,0,0,    0,2,2,0,    1,3,0,0,    0,3,3,0,
+                                2,2,0,0,    2,2,2,0,    1,2,1,0,    3,3,3,0,
+                                2,2,0,0,    0,2,2,0,    1,3,0,0,    0,3,3,0,    };
+
+unsigned int cycle_matrix[] = { 7,6,0,0,    0,3,5,0,    3,2,2,0,    0,4,6,0,
+                                2,5,0,0,    0,4,6,0,    2,4,0,0,    0,4,7,0,
+                                6,6,0,0,    3,3,5,0,    4,2,2,0,    4,4,6,0,
+                                2,5,0,0,    0,4,6,0,    2,4,0,0,    0,4,7,0,
+                                
+                                6,6,0,0,    0,3,5,0,    3,2,2,0,    3,4,6,0,
+                                2,5,0,0,    0,4,6,0,    2,4,0,0,    0,4,7,0,
+                                6,6,0,0,    0,3,5,0,    4,2,2,0,    5,4,6,0,
+                                2,5,0,0,    0,4,6,0,    2,4,0,0,    0,4,7,0,
+                                
+                                0,6,0,0,    3,3,3,0,    2,0,2,0,    4,4,4,0,
+                                2,6,0,0,    4,4,4,0,    2,5,2,0,    0,5,0,0,
+                                2,6,2,0,    3,3,3,0,    2,2,2,0,    4,4,4,0,
+                                2,5,0,0,    4,4,4,0,    2,4,2,0,    4,4,4,0,
+                                
+                                2,6,0,0,    3,3,5,0,    2,2,2,0,    4,4,6,0,
+                                2,5,0,0,    0,4,6,0,    2,4,0,0,    0,4,7,0,
+                                2,6,0,0,    3,3,5,0,    2,2,2,0,    4,4,6,0,
+                                2,5,0,0,    0,4,6,0,    2,4,0,0,    0,4,7,0,    };
+
+char *opcode_str_matrix[] = {       "BRK","ORA","UDF","UDF",    "UDF","ORA","ASL","UDF",    "PHP","ORA","ASL","UDF",    "UDF","ORA","ASL","UDF",
+                                    "BPL","ORA","UDF","UDF",    "UDF","ORA","ASL","UDF",    "CLC","ORA","UDF","UDF",    "UDF","ORA","ASL","UDF",
+                                    "JSR","AND","UDF","UDF",    "BIT","AND","ROL","UDF",    "PLP","AND","ROL","UDF",    "BIT","AND","ROL","UDF",
+                                    "BMI","AND","UDF","UDF",    "UDF","AND","ROL","UDF",    "SEC","AND","UDF","UDF",    "UDF","AND","ROL","UDF",
+                                    
+                                    "RTI","EOR","UDF","UDF",    "UDF","EOR","LSR","UDF",    "PHA","EOR","LSR","UDF",    "JMP","EOR","LSR","UDF",
+                                    "BVC","EOR","UDF","UDF",    "UDF","EOR","LSR","UDF",    "CLI","EOR","UDF","UDF",    "UDF","EOR","LSR","UDF",
+                                    "RTS","ADC","UDF","UDF",    "UDF","ADC","ROR","UDF",    "PLA","ADC","ROR","UDF",    "JMP","ADC","ROR","UDF",
+                                    "BVS","ADC","UDF","UDF",    "UDF","ADC","ROR","UDF",    "SEI","ADC","UDF","UDF",    "UDF","ADC","ROR","UDF",
+                                    
+                                    "UDF","STA","UDF","UDF",    "STY","STA","STX","UDF",    "DEY","UDF","TXA","UDF",    "STY","STA","STX","UDF",
+                                    "BCC","STA","UDF","UDF",    "STY","STA","STX","UDF",    "TYA","STA","TXS","UDF",    "UDF","STA","UDF","UDF",
+                                    "LDY","LDA","LDX","UDF",    "LDY","LDA","LDX","UDF",    "TAY","LDA","TAX","UDF",    "LDY","LDA","LDX","UDF",
+                                    "BCS","LDA","UDF","UDF",    "LDY","LDA","LDX","UDF",    "CLV","LDA","TSX","UDF",    "LDY","LDA","LDX","UDF",
+                                    
+                                    "CPY","CMP","UDF","UDF",    "CPY","CMP","DEC","UDF",    "INY","CMP","DEX","UDF",    "CPY","CMP","DEC","UDF",
+                                    "BNE","CMP","UDF","UDF",    "UDF","CMP","DEC","UDF",    "CLD","CMP","UDF","UDF",    "UDF","CMP","DEC","UDF",
+                                    "CPX","SBC","UDF","UDF",    "CPX","SBC","INC","UDF",    "INX","SBC","NOP","UDF",    "CPX","SBC","INC","UDF",
+                                    "BEQ","SBC","UDF","UDF",    "UDF","SBC","INC","UDF",    "SED","SBC","UDF","UDF",    "UDF","SBC","INC","UDF",    };
+
+//TODO: design proper decoding
+InstrInfo decode_instruction(uint8_t byte) {
+
+    opcode ptr = opcode_matrix[byte];
+    address_mode addr_mode = address_mode_matrix[byte];
+    unsigned int n_bytes = byte_matrix[byte];
+    unsigned int n_cycles = cycle_matrix[byte];
+    InstrInfo ret_ir = {ptr, addr_mode, n_bytes, n_cycles, "UDF"};
+    strcpy(ret_ir.opcode_mnemonic, opcode_str_matrix[byte]);
+
+    return ret_ir;
 }

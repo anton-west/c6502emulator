@@ -20,6 +20,8 @@ void init_cpu(Processor *cpu) {
     cpu->acc=0;
 
     cpu->cycles=0;
+    cpu->abs_addr=0;
+    cpu->fetched_value=0;
 }
 
 void reset_cpu(Processor *cpu) {
@@ -57,11 +59,10 @@ int cpu_clock(Processor *cpu) {
 
     //if cycle == 0, fetch next instruction at program counter location in memory
     if (cpu->cycles == 0) {
-        Ir ir = {0};
         uint8_t instruction = cpu_read(cpu, cpu->pc);
-        opcode ptr = decode_instruction(instruction); //pc is incremented here by necessary amount
-        (ptr)(instruction, cpu, &ir);
-        cpu->cycles += ir.cycles;
+        InstrInfo ir = decode_instruction(instruction); //pc is incremented here by necessary amount
+        (ir.fnc_ptr)(cpu, &ir);
+        cpu->cycles += ir.n_cycles;
     }
     cpu->cycles--;
     return cpu->cycles;

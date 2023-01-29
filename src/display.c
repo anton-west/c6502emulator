@@ -1,4 +1,5 @@
 #include <ncurses.h>
+#include <string.h>
 
 #include "display.h"
 #include "cpu.h"
@@ -8,6 +9,7 @@ WINDOW *win_2;
 WINDOW *win_sr;
 WINDOW *win_cpu;
 WINDOW *win_stack;
+WINDOW *win_decode;
 
 int get_starty(int height) { 
     return (LINES - height) / 2;
@@ -144,6 +146,65 @@ int print_to_win_stack(uint8_t *stack, uint8_t stack_pointer) {
     return 0;
 }
 
+//TODO: implement proper decoding of machine code
+int print_and_decode(InstrInfo *ir_arr, size_t n_ir) {
+    
+    for (size_t i = 0; i < n_ir; i++) {
+
+        //all the addr modes: UDF, ACC, ABS, ABX, ABY, IMM, IMP, IND, IDX, IDY, REL, ZPG, ZPX, ZPY
+        char addr_mode[10];
+        switch ((ir_arr + i)->addr_mode)
+        {
+        case ACC:
+            strcpy(addr_mode,"ACC");
+            break;
+        case ABS:
+            strcpy(addr_mode,"ABS");
+            break;
+        case ABX:
+            strcpy(addr_mode,"ABX");
+            break;
+        case ABY:
+            strcpy(addr_mode,"ABY");
+            break;
+        case IMM:
+            strcpy(addr_mode,"IMM");
+            break;
+        case IMP:
+            strcpy(addr_mode,"IMP");
+            break;
+        case IND:
+            strcpy(addr_mode,"IND");
+            break;
+        case IDX:
+            strcpy(addr_mode,"IDX");
+            break;
+        case IDY:
+            strcpy(addr_mode,"IDY");
+            break;
+        case REL:
+            strcpy(addr_mode,"REL");
+            break;
+        case ZPG:
+            strcpy(addr_mode,"ZPG");
+            break;
+        case ZPX:
+            strcpy(addr_mode,"ZPX");
+            break;
+        case ZPY:
+            strcpy(addr_mode,"ZPY");
+            break;
+        default:
+            strcpy(addr_mode, "UDF");
+            break;
+        }
+        mvwprintw(win_decode, 1+i,1, "%s %s", (ir_arr + i)->opcode_mnemonic, addr_mode);
+        
+    }
+    wrefresh(win_decode);
+    return 0;
+}
+
 int start_display() {
 
 	int startx, starty;
@@ -157,7 +218,7 @@ int start_display() {
 	keypad(stdscr, TRUE);		/* I need that nifty F1 	*/
 
 	starty = (LINES - (6+6+10)) / 2;	/* Calculating for a center placement */
-	startx = (COLS - (74)) / 2;	/* of the window		*/
+	startx = (COLS - (74 + 30)) / 2;	/* of the window		*/
 
     
 
@@ -166,6 +227,7 @@ int start_display() {
     win_sr = create_newwin(10, 12, starty + 12, startx);
     win_cpu = create_newwin(10, 17, starty + 12, startx + 12);
     win_stack = create_newwin(10, 45, starty + 12, startx + 29);
+    win_decode = create_newwin(22, 30, starty, startx + 74);
 	/* Show that box 		            */
 
     refresh();

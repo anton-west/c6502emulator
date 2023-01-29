@@ -9,6 +9,18 @@
 
 #include "cpu.h"
 
+/*
+ *    Style guide: The most important thing here is consistency!
+ *
+ *    All macros and constants in caps: MAX_BUFFER_SIZE, TRACKING_ID_PREFIX.
+ *    Struct names and typedef's in camelcase: GtkWidget, TrackingOrder.
+ *    Functions that operate on structs: classic C style: gtk_widget_show(), tracking_order_process().
+ *    Pointers: nothing fancy here: GtkWidget *foo, TrackingOrder *bar.
+ *    Global variables: just don't use global variables. They are evil.
+ *    Functions that are there, but shouldn't be called directly, or have obscure uses, or whatever: one or more underscores at the beginning: _refrobnicate_data_tables(), _destroy_cache().
+ *
+ */
+
 #define MAX_MEMORY_ADDR 65536
 
 int main(int argc, char *argv[]) {	
@@ -50,7 +62,7 @@ int main(int argc, char *argv[]) {
             i++;
         }
     }
-
+    
     
     Processor cpu = {0};
     
@@ -58,6 +70,14 @@ int main(int argc, char *argv[]) {
     
     init_cpu(&cpu);
 
+    InstrInfo ir_arr[20];
+    uint16_t temp_pc = 0;
+    for (int i = 0; i < 20; i++) {
+        InstrInfo ir_element = decode_instruction(memory[temp_pc]);
+        ir_arr[i] = ir_element;
+        temp_pc += (ir_element.n_bytes);
+        //printf("%s\n", ir_element.opcode_mnemonic);
+    }
     start_display();
 
     char c;
