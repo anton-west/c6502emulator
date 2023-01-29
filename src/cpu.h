@@ -3,6 +3,8 @@
 
 #include "stdint.h"
 
+//struct to hold information of opcode execution
+
 typedef struct Processor {
     uint16_t pc;
     uint8_t sp;
@@ -51,6 +53,16 @@ typedef struct Processor {
 
 } Processor;
 
+typedef enum address_mode {UDF, ACC, ABS, ABX, ABY, IMM, IMP, IND, IDX, IDY, REL, ZPG, ZPX, ZPY} address_mode;
+
+typedef struct InstructionInfo {
+    void (*fnc_ptr) (Processor *cpu, struct InstructionInfo *ir);      //equivalent to opcode function ptr signature
+    address_mode addr_mode;
+    unsigned int n_bytes;
+    unsigned int n_cycles;
+    char opcode_mnemonic[4];
+} InstrInfo;
+
 void init_cpu(Processor *cpu);
 
 void cpu_set_memory(Processor *cpu, uint8_t *memory);
@@ -59,7 +71,7 @@ uint8_t cpu_read(Processor *cpu, uint16_t addr);
 
 uint8_t cpu_write(Processor *cpu, uint16_t addr, uint8_t value);
 
-int cpu_clock(Processor *cpu);
+int cpu_clock(Processor *cpu, InstrInfo *ir);
 
 int setFlag(const char flag, uint16_t value, Processor *cpu);
 

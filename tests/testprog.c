@@ -598,7 +598,7 @@ static void LDA_IMM_1(void **state) {
 
     assert_int_equal(cpu.status_reg, 0);
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
 
     assert_int_equal(cpu.acc, 0xAA);
     assert_int_equal(getFlag('N',&cpu), 1);
@@ -619,7 +619,7 @@ static void LDA_IMM_2(void **state) {
 
     assert_int_equal(cpu.status_reg, 0);
     
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
 
     assert_int_equal(cpu.acc, 0x00);
     assert_int_equal(getFlag('Z',&cpu), 1);
@@ -641,7 +641,7 @@ static void LDA_ZEP_1(void **state) {
 
     assert_int_equal(cpu.status_reg, 0);
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
 
     assert_int_equal(cpu.acc, 0xF0);
     assert_int_equal(getFlag('N',&cpu), 1);
@@ -664,7 +664,7 @@ static void LDA_ZEP_2(void **state) {
 
     assert_int_equal(cpu.status_reg, 0);
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
 
     assert_int_equal(cpu.acc, 0x00);
     assert_int_equal(getFlag('Z',&cpu), 1);
@@ -687,7 +687,7 @@ static void LDA_ZPX_1(void **state) {
 
     assert_int_equal(cpu.status_reg, 0);
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
 
     assert_int_equal(cpu.acc, 0xF0);
     assert_int_equal(getFlag('N',&cpu), 1);
@@ -710,7 +710,7 @@ static void LDA_ZPX_2(void **state) {
 
     assert_int_equal(cpu.status_reg, 0);
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
 
     assert_int_equal(cpu.acc, 0xF0);
     assert_int_equal(getFlag('N',&cpu), 1);
@@ -732,7 +732,7 @@ static void LDA_ABS_1(void **state) {
 
     assert_int_equal(cpu.status_reg, 0);
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
 
     assert_int_equal(cpu.acc, 0xF0);
     assert_int_equal(getFlag('N',&cpu), 1);
@@ -754,7 +754,7 @@ static void LDA_ABS_2(void **state) {
 
     assert_int_equal(cpu.status_reg, 0);
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
 
     assert_int_equal(cpu.acc, 0xF0);
     assert_int_equal(getFlag('N',&cpu), 1);
@@ -778,7 +778,7 @@ static void LDA_ABX_1(void **state) {
 
     assert_int_equal(cpu.status_reg, 0);
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
 
     assert_int_equal(cpu.acc, 0xF0);
     assert_int_equal(getFlag('N',&cpu), 1);
@@ -802,7 +802,7 @@ static void LDA_ABX_2(void **state) {
 
     assert_int_equal(cpu.status_reg, 0);
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
 
     assert_int_equal(cpu.acc, 0xF0);
     assert_int_equal(getFlag('N',&cpu), 1);
@@ -826,7 +826,7 @@ static void LDA_ABY_1(void **state) {
 
     assert_int_equal(cpu.status_reg, 0);
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
 
     assert_int_equal(cpu.acc, 0xF0);
     assert_int_equal(getFlag('N',&cpu), 1);
@@ -850,7 +850,7 @@ static void LDA_ABY_2(void **state) {
 
     assert_int_equal(cpu.status_reg, 0);
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
 
     assert_int_equal(cpu.acc, 0xF0);
     assert_int_equal(getFlag('N',&cpu), 1);
@@ -874,7 +874,7 @@ static void LDA_IDX_1(void **state) {
 
     assert_int_equal(cpu.status_reg, 0);
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
 
     assert_int_equal(cpu.acc, 0xF0);
     assert_int_equal(getFlag('N',&cpu), 1);
@@ -898,7 +898,7 @@ static void LDA_IDX_2(void **state) {
 
     assert_int_equal(cpu.status_reg, 0);
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
 
     assert_int_equal(cpu.acc, 0xF0);
     assert_int_equal(getFlag('N',&cpu), 1);
@@ -924,7 +924,7 @@ static void LDA_IDY_1(void **state) {
 
     assert_int_equal(cpu.status_reg, 0);
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
 
     assert_int_equal(cpu.acc, 0xF1);
     assert_int_equal(getFlag('N',&cpu), 1);
@@ -950,7 +950,7 @@ static void LDA_IDY_2(void **state) {
 
     assert_int_equal(cpu.status_reg, 0);
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
 
     assert_int_equal(cpu.acc, 0xF1);
     assert_int_equal(getFlag('N',&cpu), 1);
@@ -973,7 +973,7 @@ static void LDA_1(void **state) {
     memory[1] = 0xF0;
     cpu_set_memory(&cpu, memory);
     init_cpu(&cpu);
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
 
     assert_int_equal(cpu.acc, 0xF0);
     assert_int_equal(getFlag('N',&cpu), 1);
@@ -989,7 +989,7 @@ static void LDA_2(void **state) {
     memory[1] = 0x00;
     cpu_set_memory(&cpu, memory);
     init_cpu(&cpu);
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
 
     assert_int_equal(cpu.acc, 0x00);
     assert_int_equal(getFlag('N',&cpu), 0);
@@ -1005,7 +1005,7 @@ static void LDX_1(void **state) {
     memory[1] = 0xF0;
     cpu_set_memory(&cpu, memory);
     init_cpu(&cpu);
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
 
     assert_int_equal(cpu.x_reg, 0xF0);
     assert_int_equal(getFlag('N',&cpu), 1);
@@ -1021,7 +1021,7 @@ static void LDX_2(void **state) {
     memory[1] = 0x00;
     cpu_set_memory(&cpu, memory);
     init_cpu(&cpu);
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
 
     assert_int_equal(cpu.x_reg, 0x00);
     assert_int_equal(getFlag('N',&cpu), 0);
@@ -1037,7 +1037,7 @@ static void LDY_1(void **state) {
     memory[1] = 0xF0;
     cpu_set_memory(&cpu, memory);
     init_cpu(&cpu);
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
 
     assert_int_equal(cpu.y_reg, 0xF0);
     assert_int_equal(getFlag('N',&cpu), 1);
@@ -1053,7 +1053,7 @@ static void LDY_2(void **state) {
     memory[1] = 0x00;
     cpu_set_memory(&cpu, memory);
     init_cpu(&cpu);
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
 
     assert_int_equal(cpu.y_reg, 0x00);
     assert_int_equal(getFlag('N',&cpu), 0);
@@ -1072,7 +1072,7 @@ static void STA_1(void **state) {
 
     cpu.acc = 0xFF;
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(memory[2], 0xFF);
     assert_int_equal(cpu.status_reg, 0);
@@ -1090,7 +1090,7 @@ static void STX_1(void **state) {
 
     cpu.x_reg = 0xFF;
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(memory[2], 0xFF);
     assert_int_equal(cpu.status_reg, 0);
@@ -1108,7 +1108,7 @@ static void STY_1(void **state) {
 
     cpu.y_reg = 0xFF;
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(memory[2], 0xFF);
     assert_int_equal(cpu.status_reg, 0);
@@ -1125,7 +1125,7 @@ static void TAX_1(void **state) {
 
     cpu.acc = 0xFF;
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(cpu.x_reg, 0xFF);
     assert_int_equal(getFlag('N',&cpu), 1);
@@ -1143,7 +1143,7 @@ static void TAY_1(void **state) {
 
     cpu.acc = 0xFF;
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(cpu.y_reg, 0xFF);
     assert_int_equal(getFlag('N',&cpu), 1);
@@ -1161,7 +1161,7 @@ static void TSX_1(void **state) {
 
     cpu.sp = 0xFF;
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(cpu.x_reg, 0xFF);
     assert_int_equal(getFlag('N',&cpu), 1);
@@ -1179,7 +1179,7 @@ static void TXA_1(void **state) {
 
     cpu.x_reg = 0xFF;
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(cpu.acc, 0xFF);
     assert_int_equal(getFlag('N',&cpu), 1);
@@ -1197,7 +1197,7 @@ static void TXS_1(void **state) {
 
     cpu.x_reg = 0xFF;
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(cpu.sp, 0xFF);
     assert_int_equal(cpu.status_reg, 0);
@@ -1214,7 +1214,7 @@ static void TYA_1(void **state) {
 
     cpu.y_reg = 0xFF;
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(cpu.acc, 0xFF);
     assert_int_equal(getFlag('N',&cpu), 1);
@@ -1234,7 +1234,7 @@ static void ASL_1(void **state) {
 
     cpu.acc = 0x88;
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(cpu.acc, 0x10);
     assert_int_equal(getFlag('N',&cpu), 0);
@@ -1254,7 +1254,7 @@ static void LSR_1(void **state) {
 
     cpu.acc = 0x88;
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(cpu.acc, 0x44);
     assert_int_equal(getFlag('N',&cpu), 0);
@@ -1273,7 +1273,7 @@ static void LSR_2(void **state) {
 
     cpu.acc = 0x8F;
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(cpu.acc, 0x47);
     assert_int_equal(getFlag('N',&cpu), 0);
@@ -1293,7 +1293,7 @@ static void ROL_1(void **state) {
     cpu.acc = 0x88;
     setFlag('C', 0, &cpu);
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(cpu.acc, 0x10);
     assert_int_equal(getFlag('N',&cpu), 0);
@@ -1312,11 +1312,11 @@ static void ROL_2(void **state) {
     init_cpu(&cpu);
 
     cpu.acc = 0x88;
-
-    cpu_clock(&cpu);
-    cpu_clock(&cpu);
-    cpu_clock(&cpu);
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0};
+    cpu_clock(&cpu, &temp_ir);
+    cpu_clock(&cpu, &temp_ir);
+    cpu_clock(&cpu, &temp_ir);
+    cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(cpu.acc, 0x21);
     assert_int_equal(getFlag('N',&cpu), 0);
@@ -1336,7 +1336,7 @@ static void ROR_1(void **state) {
     cpu.acc = 0x88;
     setFlag('C', 0, &cpu);
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(cpu.acc, 0x44);
     assert_int_equal(getFlag('N',&cpu), 0);
@@ -1356,10 +1356,11 @@ static void ROR_2(void **state) {
 
     cpu.acc = 0x88;
 
-    cpu_clock(&cpu);
-    cpu_clock(&cpu);
-    cpu_clock(&cpu);
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0};
+    cpu_clock(&cpu, &temp_ir);
+    cpu_clock(&cpu, &temp_ir);
+    cpu_clock(&cpu, &temp_ir);
+    cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(cpu.acc, 0x22);
     assert_int_equal(getFlag('N',&cpu), 0);
@@ -1381,7 +1382,7 @@ static void AND_1(void **state) {
 
     cpu.acc = 0x0F;
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(cpu.acc, 0x03);
     assert_int_equal(getFlag('N',&cpu), 0);
@@ -1400,7 +1401,7 @@ static void EOR_1(void **state) {
 
     cpu.acc = 0x0F;
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(cpu.acc, 0x2D);
     assert_int_equal(getFlag('N',&cpu), 0);
@@ -1419,7 +1420,7 @@ static void ORA_1(void **state) {
 
     cpu.acc = 0x0F;
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(cpu.acc, 0x2F);
     assert_int_equal(getFlag('N',&cpu), 0);
@@ -1438,7 +1439,7 @@ static void PHA_1(void **state) {
     cpu.acc = 0x68;
     cpu.sp = 0x0F;
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(memory[0x0F], 0x68);
     assert_int_equal(cpu.sp, 0x0F-1);
@@ -1457,7 +1458,7 @@ static void PHP_1(void **state) {
     
     cpu.sp = 0x0F;
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(memory[0x0F], 0xFF);
     assert_int_equal(cpu.sp, 0x0F-1);
@@ -1475,7 +1476,7 @@ static void PLA_1(void **state) {
     
     cpu.sp = 0x0A;
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(cpu.acc, 0x12);
     assert_int_equal(cpu.sp, 0x0A+1);
@@ -1493,7 +1494,7 @@ static void PLP_1(void **state) {
     
     cpu.sp = 0x0A;
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(cpu.status_reg, 0xCF);
     assert_int_equal(cpu.sp, 0x0A+1);
@@ -1511,7 +1512,7 @@ static void ADC_1(void **state) {
     
     cpu.acc = 10;
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(cpu.acc, 20);
 }
@@ -1528,7 +1529,7 @@ static void SBC_1(void **state) {
     setFlag('C',1,&cpu);    //prepare by setting carry
     cpu.acc = 15;
 
-    cpu_clock(&cpu);
+    InstrInfo temp_ir={0}; cpu_clock(&cpu, &temp_ir);
     
     assert_int_equal(cpu.acc, 10);
 }

@@ -267,7 +267,9 @@ void I_BNE(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "BNE");
     fetch_target_value(cpu, ir);
     if (getFlag('Z', cpu) == 0) {
-        cpu->pc = cpu->abs_addr;
+        cpu->pc = cpu->abs_addr;     
+    } else {
+        cpu->pc += 2;
     }
 }
 void I_BPL(Processor *cpu, InstrInfo *ir) {
@@ -282,10 +284,17 @@ void I_BRK(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "BRK");
 
     setFlag('I', 1, cpu);
-    cpu_write(cpu, cpu->sp, cpu->pc+2);
+    cpu_write(cpu, 0x0100 | cpu->sp, ((cpu->pc+2)>>8) & 0x00FF);
     cpu->sp--;
-    cpu_write(cpu, cpu->sp, cpu->status_reg);
+    cpu_write(cpu, 0x0100 | cpu->sp, (cpu->pc+2) & 0x00FF);
     cpu->sp--;
+
+    setFlag('B', 1, cpu);
+    cpu_write(cpu, 0x0100 | cpu->sp, cpu->status_reg);
+    cpu->sp--;
+    setFlag('B', 0, cpu);
+
+    cpu->pc = (uint16_t)cpu_read(cpu, 0xFFFE) | ((uint16_t)cpu_read(cpu, 0xFFFF) << 8);
 }
 void I_BVC(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "BVC");
@@ -355,12 +364,14 @@ void I_DEC(Processor *cpu, InstrInfo *ir) {
 void I_DEX(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "DEX");
     cpu->x_reg--;
+    cpu->pc++;
     setFlag('N', cpu->x_reg & 0x80, cpu);
     setFlag('Z', cpu->x_reg == 0, cpu);
 }
 void I_DEY(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "DEY");
     cpu->y_reg--;
+    cpu->pc++;
     setFlag('N', cpu->y_reg & 0x80, cpu);
     setFlag('Z', cpu->y_reg == 0, cpu);
 }

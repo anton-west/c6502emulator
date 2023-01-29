@@ -1,19 +1,7 @@
 #ifndef OPCODES_H
 #define OPCODES_H
 
-
 #include "cpu.h"
-
-typedef enum address_mode {UDF, ACC, ABS, ABX, ABY, IMM, IMP, IND, IDX, IDY, REL, ZPG, ZPX, ZPY} address_mode;
-
-//struct to hold information of opcode execution
-typedef struct InstructionInfo {
-    void (*fnc_ptr) (Processor *cpu, struct InstructionInfo *ir);      //equivalent to opcode function ptr signature
-    address_mode addr_mode;
-    unsigned int n_bytes;
-    unsigned int n_cycles;
-    char opcode_mnemonic[4];
-} InstrInfo;
 
 typedef void (*opcode) (Processor *cpu, InstrInfo *ir);
 

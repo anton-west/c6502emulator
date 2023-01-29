@@ -107,12 +107,12 @@ int print_to_win_sr(uint8_t status_register) {
 }
 
 int print_to_win_cpu(Processor *cpu) {
-    mvwprintw(win_cpu,1,3, "AC:  %02X", cpu->acc);
-    mvwprintw(win_cpu,2,3, "XR:  %02X", cpu->x_reg);
-    mvwprintw(win_cpu,3,3, "YR:  %02X", cpu->y_reg);
-    mvwprintw(win_cpu,5,3, "SP:  %02X", cpu->sp);
-    mvwprintw(win_cpu,7,3, "PC:  %04X", cpu->pc);
-    mvwprintw(win_cpu,8,3, "CY:  %d", cpu->cycles);
+    mvwprintw(win_cpu,1,2, "AC: $%02X (%03d)", cpu->acc, cpu->acc);
+    mvwprintw(win_cpu,2,2, "XR: $%02X (%03d)", cpu->x_reg, cpu->x_reg);
+    mvwprintw(win_cpu,3,2, "YR: $%02X (%03d)", cpu->y_reg, cpu->y_reg);
+    mvwprintw(win_cpu,5,2, "SP: $%02X", cpu->sp);
+    mvwprintw(win_cpu,7,2, "PC: $%04X", cpu->pc);
+    mvwprintw(win_cpu,8,2, "CY: %d", cpu->cycles);
 
     wrefresh(win_cpu);
     return 0;
@@ -198,7 +198,8 @@ int print_and_decode(InstrInfo *ir_arr, size_t n_ir) {
             strcpy(addr_mode, "UDF");
             break;
         }
-        mvwprintw(win_decode, 1+i,1, "%s %s", (ir_arr + i)->opcode_mnemonic, addr_mode);
+        mvwprintw(win_decode, 1,1, "current instruction:");
+        mvwprintw(win_decode, 2+i,1, "  %s %s", (ir_arr + i)->opcode_mnemonic, addr_mode);
         
     }
     wrefresh(win_decode);
@@ -229,6 +230,10 @@ int start_display() {
     win_stack = create_newwin(10, 45, starty + 12, startx + 29);
     win_decode = create_newwin(22, 30, starty, startx + 74);
 	/* Show that box 		            */
+
+    mvwprintw(stdscr, starty-3, startx, "\"SPACE\": cycle 1 instruction");
+    mvwprintw(stdscr, starty-2, startx, "\"s\": clock 1 cycle");
+    mvwprintw(stdscr, starty-1, startx, "\"q\": quit");
 
     refresh();
 

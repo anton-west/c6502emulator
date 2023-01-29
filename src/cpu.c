@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdarg.h>
 
 #include "cpu.h"
 #include "opcodes.h"
@@ -11,7 +12,7 @@ void init_cpu(Processor *cpu) {
     cpu->pc = (pc_low & 0x00FF) | (pc_high << 8);
     cpu->pc = 0;
     
-    cpu->sp=0;
+    cpu->sp=0xFD;
     cpu->status_reg=0;    //TODO: this should go here: 0 | 0x20; is how status register is initialized on actual 6502
 
     cpu->x_reg=0;
@@ -55,14 +56,15 @@ uint8_t cpu_write(Processor *cpu, uint16_t addr, uint8_t value) {
     return cpu->memory[addr];
 }
 
-int cpu_clock(Processor *cpu) {
+int cpu_clock(Processor *cpu, InstrInfo *ir) {
 
     //if cycle == 0, fetch next instruction at program counter location in memory
     if (cpu->cycles == 0) {
         uint8_t instruction = cpu_read(cpu, cpu->pc);
-        InstrInfo ir = decode_instruction(instruction); //pc is incremented here by necessary amount
-        (ir.fnc_ptr)(cpu, &ir);
-        cpu->cycles += ir.n_cycles;
+        InstrInfo ir_temp = decode_instruction(instruction); //pc is incremented here by necessary amount
+        (ir_temp.fnc_ptr)(cpu, &ir_temp);
+        cpu->cycles += ir_temp.n_cycles;
+        *ir = ir_temp;
     }
     cpu->cycles--;
     return cpu->cycles;
@@ -77,7 +79,7 @@ int cpu_clock(Processor *cpu) {
     
     7  bit  0
     ---- ----
-    NVss DIZC
+    NVsB DIZC
     |||| ||||
     |||| |||+- Carry
     |||| ||+-- Zero
@@ -98,6 +100,9 @@ int setFlag(const char flag, uint16_t value, Processor *cpu) {
         break;
     case 'V':
         cpu->status_reg = (cpu->status_reg & ~(1U << 6)) | (value << 6);
+        break;
+    case 'B':
+        cpu->status_reg = (cpu->status_reg & ~(1U << 4)) | (value << 4);
         break;
     case 'D':
         cpu->status_reg = (cpu->status_reg & ~(1U << 3)) | (value << 3);

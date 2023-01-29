@@ -62,22 +62,15 @@ int main(int argc, char *argv[]) {
             i++;
         }
     }
-    
+    InstrInfo current_instruction = {0};
     
     Processor cpu = {0};
-    
+        
     cpu_set_memory(&cpu, memory);
     
     init_cpu(&cpu);
+    cpu.pc = 0x40;
 
-    InstrInfo ir_arr[20];
-    uint16_t temp_pc = 0;
-    for (int i = 0; i < 20; i++) {
-        InstrInfo ir_element = decode_instruction(memory[temp_pc]);
-        ir_arr[i] = ir_element;
-        temp_pc += (ir_element.n_bytes);
-        //printf("%s\n", ir_element.opcode_mnemonic);
-    }
     start_display();
 
     char c;
@@ -86,11 +79,12 @@ int main(int argc, char *argv[]) {
 
         //print info to display
         print_to_win1(memory, 64);
-        print_to_win2(memory+256, 64);
+        print_to_win2(memory+64, 64);
 
         print_to_win_sr(cpu.status_reg);
         print_to_win_cpu(&cpu);
         print_to_win_stack(memory, cpu.sp);
+        print_and_decode(&current_instruction,1);
         
         refresh();
 
@@ -107,7 +101,15 @@ int main(int argc, char *argv[]) {
             break;
         
         case ' ':
-            cpu_clock(&cpu);
+            do {
+                cpu_clock(&cpu, &current_instruction);
+            } while (cpu.cycles != 0);
+            break;
+
+        case 's':
+            cpu_clock(&cpu, &current_instruction);
+            break;
+
         default:
             break;
         }
