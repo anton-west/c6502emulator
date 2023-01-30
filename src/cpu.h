@@ -79,6 +79,10 @@ void init_cpu(Processor *cpu);
 
 void cpu_reset(Processor *cpu);
 
+void cpu_irq(Processor *cpu);
+
+void cpu_nmi(Processor *cpu);
+
 void cpu_set_memory(Processor *cpu, uint8_t *memory);
 
 uint8_t cpu_read(Processor *cpu, uint16_t addr);

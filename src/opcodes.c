@@ -294,6 +294,7 @@ void I_BRK(Processor *cpu, InstrInfo *ir) {
     cpu->sp--;
     setFlag('B', 0, cpu);
 
+    //read reset vector for pc
     cpu->pc = (uint16_t)cpu_read(cpu, 0xFFFE) | ((uint16_t)cpu_read(cpu, 0xFFFF) << 8);
 }
 void I_BVC(Processor *cpu, InstrInfo *ir) {
@@ -410,9 +411,12 @@ void I_JMP(Processor *cpu, InstrInfo *ir) {
 }
 void I_JSR(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "JSR");
-    cpu_write(cpu, cpu->sp, (cpu->pc >> 8) & 0x00FF );
+    //JSR is a very wierd instruction, it is 3 bytes long so last byte of abs addr is pushed onto stack
+    //logically this should instead be pc+3, i.e. next instruction. Instead, when returning with RTS,
+    //1 is added to the returned pc and everything works
+    cpu_write(cpu, 0x0100 | cpu->sp, ((cpu->pc + 2) >> 8) & 0x00FF );
     cpu->sp--;
-    cpu_write(cpu, cpu->sp, cpu->pc & 0x00FF );
+    cpu_write(cpu, 0x0100 | cpu->sp, (cpu->pc + 2) & 0x00FF );
     cpu->sp--;
     fetch_target_value(cpu, ir);
     cpu->pc=cpu->abs_addr;;
@@ -464,25 +468,27 @@ void I_ORA(Processor *cpu, InstrInfo *ir) {
 }
 void I_PHA(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "PHA");
-    cpu_write(cpu, (uint16_t)cpu->sp, cpu->acc);
+    cpu_write(cpu, 0x0100 | cpu->sp, cpu->acc);
     cpu->sp--;
 }
 void I_PHP(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "PHP");
-    cpu_write(cpu, (uint16_t)cpu->sp, cpu->status_reg | 0x30);
+    cpu_write(cpu, 0x0100 | cpu->sp, cpu->status_reg | (flag_U | flag_B));
     cpu->sp--;
 }
 void I_PLA(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "PLA");
-    cpu->acc = cpu_read(cpu, (uint16_t)cpu->sp);
+    cpu->acc = cpu_read(cpu, 0x0100 | cpu->sp);
     cpu->sp++;
     setFlag('N', cpu->acc & 0x80, cpu);
     setFlag('Z', cpu->acc == 0, cpu);
 }
 void I_PLP(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "PHP");
-    cpu->status_reg = cpu_read(cpu, (uint16_t)cpu->sp) & 0xCF;
+    cpu->status_reg = cpu_read(cpu, 0x0100 | cpu->sp);
     cpu->sp++;
+
+    cpu->status_reg &= ~(flag_U | flag_B); //ignore unused and break;
 }
 void I_ROL(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "ROL");  
@@ -509,19 +515,27 @@ void I_ROR(Processor *cpu, InstrInfo *ir) {
 void I_RTI(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "RTI");
     cpu->sp++;
-    cpu->status_reg = cpu_read(cpu, cpu->sp) & 0xCB;    //interrupt flag ignored and b flags
+    cpu->status_reg = cpu_read(cpu, 0x0100 | cpu->sp);
+    //B and U ignored, set to 0
+    cpu->status_reg &= ~(flag_U | flag_B);
+
     cpu->sp++;
-    cpu->pc = cpu_read(cpu, cpu->sp);
+    uint16_t low_byte = cpu_read(cpu, 0x0100 | cpu->sp);
+    cpu->sp++;
+    uint16_t high_byte = cpu_read(cpu, 0x0100 | cpu->sp);
+
+    cpu->pc = (high_byte << 8) | low_byte;
 }
 void I_RTS(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "RTS");
     cpu->sp++;
-    uint16_t low_byte = cpu_read(cpu, cpu->sp);
-    uint16_t high_byte = cpu_read(cpu, cpu->sp);
+    uint16_t low_byte = cpu_read(cpu, 0x0100 | cpu->sp);
+    cpu->sp++;
+    uint16_t high_byte = cpu_read(cpu, 0x0100 | cpu->sp);
 
-    uint16_t trg_addr = low_byte | ((high_byte << 8)  & 0xFF00);
+    uint16_t trg_addr = (high_byte << 8) | low_byte;
     cpu->pc=trg_addr;
-    cpu->pc++;
+    cpu->pc++;          //need to increment by one, otherwise returning to wrong address due behaviour of JSR
 }
 void I_SBC(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "SBC");

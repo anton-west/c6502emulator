@@ -11,10 +11,8 @@ void init_cpu(Processor *cpu) {
 void cpu_reset(Processor *cpu) {
     //reset vector: $FFFC - $FFFD (LB, HB)
     uint16_t abs_addr = 0xFFFC;
-
     uint16_t low_byte = cpu_read(cpu, abs_addr);
     uint16_t high_byte = cpu_read(cpu, abs_addr + 1);
-
     //set pc to value found in reset vector
     cpu->pc = (high_byte << 8) | low_byte;
 
@@ -33,6 +31,61 @@ void cpu_reset(Processor *cpu) {
     cpu->fetched_value = 0;
     
     //reset takes 8 cycles
+    cpu->cycles = 8;
+}
+
+//interrupt request
+void cpu_irq(Processor *cpu) {
+    
+    //check interrupt disable is not active
+    if (getFlag('I', cpu) == 0) {
+
+        //push pc to stack, HB, then LB
+        cpu_write(cpu, 0x1000 | cpu->sp, (cpu->pc >> 8));
+        cpu->sp--;
+        cpu_write(cpu, 0x1000 | cpu->sp, (cpu->pc) & 0x00FF);
+        cpu->sp--;
+
+        //push status reg to stack
+        setFlag('B',0,cpu); //B flag is 0 when pushed by hardware interrupt like irq
+        setFlag('I',1,cpu);
+        cpu_write(cpu, 0x0100 | cpu->sp, cpu->status_reg);
+        cpu->sp--;
+
+        //read new program counter from interrupt vector $FFFE - $FFFF (LB, HB)
+        uint16_t abs_addr = 0xFFFE;
+        uint16_t low_byte = cpu_read(cpu, abs_addr);
+        uint16_t high_byte = cpu_read(cpu, abs_addr + 1);
+        //set pc to value found in reset vector
+        cpu->pc = (high_byte << 8) | low_byte;
+
+        //interrupt takes 7 cycles
+        cpu->cycles = 7;
+    }
+}
+
+//non-maskable interrupt
+void cpu_nmi(Processor *cpu) {
+    //push pc to stack, HB, then LB
+    cpu_write(cpu, 0x1000 | cpu->sp, (cpu->pc >> 8));
+    cpu->sp--;
+    cpu_write(cpu, 0x1000 | cpu->sp, (cpu->pc) & 0x00FF);
+    cpu->sp--;
+
+    //push status reg to stack
+    setFlag('B',0,cpu); //B flag is 0 when pushed by hardware interrupt like irq
+    setFlag('I',1,cpu);
+    cpu_write(cpu, 0x0100 | cpu->sp, cpu->status_reg);
+    cpu->sp--;
+
+    //read new program counter from interrupt vector $FFFA - $FFFB (LB, HB)
+    uint16_t abs_addr = 0xFFFA;
+    uint16_t low_byte = cpu_read(cpu, abs_addr);
+    uint16_t high_byte = cpu_read(cpu, abs_addr + 1);
+    //set pc to value found in reset vector
+    cpu->pc = (high_byte << 8) | low_byte;
+
+    //interrupt takes 8 cycles
     cpu->cycles = 8;
 }
 

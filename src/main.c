@@ -77,8 +77,8 @@ int main(int argc, char *argv[]) {
     while (cont) {
 
         //print info to display
-        print_to_win1(memory, 64);
-        print_to_win2(memory+64, 64);
+        print_to_win(win_1, memory, 0, 64);
+        print_to_win(win_2, memory, 64, 64);
 
         print_to_win_sr(cpu.status_reg);
         print_to_win_cpu(&cpu);
@@ -108,6 +108,17 @@ int main(int argc, char *argv[]) {
         case 's':
             cpu_clock(&cpu, &current_instruction);
             break;
+        
+        case 'r':
+            cpu_reset(&cpu);
+            break;
+
+        case 'i':
+            cpu_irq(&cpu);
+            break;
+
+        case 'n':
+            cpu_nmi(&cpu);
 
         default:
             break;

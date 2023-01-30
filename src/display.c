@@ -4,13 +4,6 @@
 #include "display.h"
 #include "cpu.h"
 
-WINDOW *win_1;
-WINDOW *win_2;
-WINDOW *win_sr;
-WINDOW *win_cpu;
-WINDOW *win_stack;
-WINDOW *win_decode;
-
 int get_starty(int height) { 
     return (LINES - height) / 2;
 }
@@ -50,57 +43,98 @@ void destroy_win(WINDOW *local_win)
 	delwin(local_win);
 }
 
-int print_to_win1(uint8_t* data, int data_n) {
+int print_to_win(WINDOW *win, uint8_t* data, unsigned int data_start, int data_n) {
     int line = 1;
-    int column = 3;
+    int column = 10;
 
     for (int i = 0; i < own_min(data_n,64); i++) {
         if (i % 16 == 0 && i != 0) {
             line++;
-            column = 3;
+            column = 10;
         }
         if (i % 4 == 0 && i != 0 && i != 16 && i != 32 && i != 48) {
-            mvwprintw(win_1,line, column, "  ");
+            mvwprintw(win,line, column, "  ");
             column += 2;
         }
-        mvwprintw(win_1,line, column, "%02X", data[i]);
+
+        if (i == 0 || i == 16 || i == 32 || i == 48) {
+            mvwprintw(win, line, column - 7, "$%04x:", (data_start + i));
+        }
+        mvwprintw(win, line, column, "%02X", data[data_start + i]);
         column += 4;
     }
     
-    wrefresh(win_1);
-    return 0;
-}
-
-int print_to_win2(uint8_t* data, int data_n) {
-    int line = 1;
-    int column = 3;
-
-    for (int i = 0; i < own_min(data_n,64); i++) {
-        if (i % 16 == 0 && i != 0) {
-            line++;
-            column = 3;
-        }
-        if (i % 4 == 0 && i != 0 && i != 16 && i != 32 && i != 48) {
-            mvwprintw(win_2,line, column, "  ");
-            column += 2;
-        }
-        mvwprintw(win_2,line, column, "%02X", data[i]);
-        column += 4;
-    }
-    
-    wrefresh(win_2);
+    wrefresh(win);
     return 0;
 }
 
 int print_to_win_sr(uint8_t status_register) {
-    mvwprintw(win_sr,1,3, "N:  %d", (status_register & 0x80) > 0);
-    mvwprintw(win_sr,2,3, "V:  %d", (status_register & 0x40) > 0);
-    mvwprintw(win_sr,3,3, "s:  %d", (status_register & 0x20) > 0);
-    mvwprintw(win_sr,4,3, "s:  %d", (status_register & 0x10) > 0);
-    mvwprintw(win_sr,5,3, "D:  %d", (status_register & 0x08) > 0);
-    mvwprintw(win_sr,6,3, "I:  %d", (status_register & 0x04) > 0);
-    mvwprintw(win_sr,7,3, "Z:  %d", (status_register & 0x02) > 0);
-    mvwprintw(win_sr,8,3, "C:  %d", (status_register & 0x01) > 0);
+
+    int flag_n = (status_register & 0x80) > 0;
+    int flag_v = (status_register & 0x40) > 0;
+    int flag_s = (status_register & 0x20) > 0;
+    int flag_b = (status_register & 0x10) > 0;
+    int flag_d = (status_register & 0x08) > 0;
+    int flag_i = (status_register & 0x04) > 0;
+    int flag_z = (status_register & 0x02) > 0;
+    int flag_c = (status_register & 0x01) > 0;
+
+    mvwprintw(win_sr,1,3, "N:  %d", flag_n);
+    mvwprintw(win_sr,2,3, "V:  %d", flag_v);
+    mvwprintw(win_sr,3,3, "s:  %d", flag_s);
+    mvwprintw(win_sr,4,3, "B:  %d", flag_b);
+    mvwprintw(win_sr,5,3, "D:  %d", flag_d);
+    mvwprintw(win_sr,6,3, "I:  %d", flag_i);
+    mvwprintw(win_sr,7,3, "Z:  %d", flag_z);
+    mvwprintw(win_sr,8,3, "C:  %d", flag_c);
+    
+    if (flag_n) {
+        wattrset(win_sr, A_STANDOUT);
+    }
+    mvwprintw(win_sr,1,7, "%d", flag_n);
+    wattrset(win_sr, A_NORMAL);
+
+    if (flag_v) {
+        wattrset(win_sr, A_STANDOUT);
+    }
+    mvwprintw(win_sr,2,7, "%d", flag_v);
+    wattrset(win_sr, A_NORMAL);
+
+    if (flag_s) {
+        wattrset(win_sr, A_STANDOUT);
+    }
+    mvwprintw(win_sr,3,7, "%d", flag_s);
+    wattrset(win_sr, A_NORMAL);
+    
+    if (flag_b) {
+        wattrset(win_sr, A_STANDOUT);
+    }
+    mvwprintw(win_sr,4,7, "%d", flag_b);
+    wattrset(win_sr, A_NORMAL);
+    
+    if (flag_d) {
+        wattrset(win_sr, A_STANDOUT);
+    }
+    mvwprintw(win_sr,5,7, "%d", flag_d);
+    wattrset(win_sr, A_NORMAL);
+    
+    if (flag_i) {
+        wattrset(win_sr, A_STANDOUT);
+    }
+    mvwprintw(win_sr,6,7, "%d", flag_i);
+    wattrset(win_sr, A_NORMAL);
+
+    if (flag_z) {
+        wattrset(win_sr, A_STANDOUT);
+    }
+    mvwprintw(win_sr,7,7, "%d", flag_z);
+    wattrset(win_sr, A_NORMAL);
+
+    if (flag_c) {
+        wattrset(win_sr, A_STANDOUT);
+    }
+    mvwprintw(win_sr,8,7, "%d", flag_c);
+    wattrset(win_sr, A_NORMAL);
     
     wrefresh(win_sr);
     return 0;
@@ -223,17 +257,20 @@ int start_display() {
 
     
 
-    win_1 = create_newwin(6, 74, starty, startx);
-    win_2 = create_newwin(6, 74, starty + 6, startx);
+    win_1 = create_newwin(6, 81, starty, startx);
+    win_2 = create_newwin(6, 81, starty + 6, startx);
     win_sr = create_newwin(10, 12, starty + 12, startx);
     win_cpu = create_newwin(10, 17, starty + 12, startx + 12);
     win_stack = create_newwin(10, 45, starty + 12, startx + 29);
-    win_decode = create_newwin(22, 30, starty, startx + 74);
+    win_decode = create_newwin(22, 30, starty, startx + 81);
 	/* Show that box 		            */
 
-    mvwprintw(stdscr, starty-3, startx, "\"SPACE\": cycle 1 instruction");
-    mvwprintw(stdscr, starty-2, startx, "\"s\":     clock 1 cycle");
-    mvwprintw(stdscr, starty-1, startx, "\"q\":     quit");
+    mvwprintw(stdscr, starty-6, startx, "SPACE: cycle 1 instruction");
+    mvwprintw(stdscr, starty-5, startx, "s:     step 1 cycle");
+    mvwprintw(stdscr, starty-4, startx, "r:     reset");
+    mvwprintw(stdscr, starty-3, startx, "i:     IRQ");
+    mvwprintw(stdscr, starty-2, startx, "n:     NMI");
+    mvwprintw(stdscr, starty-1, startx, "q:     quit");
 
     refresh();
 
