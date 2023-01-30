@@ -5,41 +5,34 @@
 #include "opcodes.h"
 
 void init_cpu(Processor *cpu) {
-
-    //read pc from reset vector (FFFC LB - FFFD HB)
-    uint16_t pc_low = cpu_read(cpu, 0xFFFC);
-    uint16_t pc_high = cpu_read(cpu, 0xFFFD);
-    cpu->pc = (pc_low & 0x00FF) | (pc_high << 8);
-    cpu->pc = 0;
-    
-    cpu->sp=0xFD;
-    cpu->status_reg=0;    //TODO: this should go here: 0 | 0x20; is how status register is initialized on actual 6502
-
-    cpu->x_reg=0;
-    cpu->y_reg=0;
-
-    cpu->acc=0;
-
-    cpu->cycles=0;
-    cpu->abs_addr=0;
-    cpu->fetched_value=0;
+    cpu_reset(cpu);
 }
 
-void reset_cpu(Processor *cpu) {
-    
-    //read pc from reset vector (FFFC LB - FFFD HB)
-    uint16_t pc_low = cpu_read(cpu, 0xFFFC);
-    uint16_t pc_high = cpu_read(cpu, 0xFFFD);
-    cpu->pc = (pc_low & 0x00FF) | (pc_high << 8);
+void cpu_reset(Processor *cpu) {
+    //reset vector: $FFFC - $FFFD (LB, HB)
+    uint16_t abs_addr = 0xFFFC;
 
+    uint16_t low_byte = cpu_read(cpu, abs_addr);
+    uint16_t high_byte = cpu_read(cpu, abs_addr + 1);
+
+    //set pc to value found in reset vector
+    cpu->pc = (high_byte << 8) | low_byte;
+
+    //reset registers
     cpu->acc = 0;
     cpu->x_reg = 0;
     cpu->y_reg = 0;
 
+    //The internal state of the CPU now shows that SP is 0xFD,
+    //because it got decremented 3 times from 0x00 to 0xFD during reset.
     cpu->sp = 0xFD;
-    cpu->status_reg = 0;
+    cpu->status_reg = 0 | flag_U;   //unused flag is always high when status reg is pushed to stack, can be high in all the time as it has no effect on cpu operation
 
-    //reset take 7 to 8 cycles, TODO: check exact value!
+    //clear helper variables
+    cpu->abs_addr = 0;
+    cpu->fetched_value = 0;
+    
+    //reset takes 8 cycles
     cpu->cycles = 8;
 }
 
@@ -89,6 +82,23 @@ int cpu_clock(Processor *cpu, InstrInfo *ir) {
     |+-------- Overflow
     +--------- Negative
 */
+
+/*
+    The break flag (B) is not an actual flag implemented in a register, and rather appears only,
+    when the status register is pushed onto or pulled from the stack.
+    When pushed, it will be 1 when transfered by a BRK or PHP instruction,
+    and zero otherwise (i.e., when pushed by a hardware interrupt).
+    When pulled into the status register (by PLP or on RTI), it will be ignored.
+    In other words, the break flag will be inserted,
+    whenever the status register is transferred to the stack by software (BRK or PHP),
+    and will be zero, when transferred by hardware.
+    Since there is no actual slot for the break flag, it will be always ignored, when retrieved
+    (PLP or RTI). The break flag is not accessed by the CPU at anytime and there is no internal representation.
+    Its purpose is more for patching,
+    to discern an interrupt caused by a BRK instruction from a normal interrupt initiated by hardware.
+    (https://www.masswerk.at/6502/6502_instruction_set.html)
+*/
+
 int setFlag(const char flag, uint16_t value, Processor *cpu) {
 
     if (value >= 1) { value = 1; } else { value = 0; }  //clamp value to 1 or 0
@@ -129,6 +139,8 @@ int getFlag(const char flag, Processor *cpu) {
         return (cpu->status_reg >> 7) & 1U;
     case 'V':
         return (cpu->status_reg >> 6) & 1U;
+    case 'B':
+        return (cpu->status_reg >> 4) & 1U; 
     case 'D':
         return (cpu->status_reg >> 3) & 1U;
     case 'I':

@@ -1,3 +1,3 @@
 #!/bin/sh
 make
-./bin/debug/c6502 -f file.txt
+./bin/debug/c6502 -f multiply.txt

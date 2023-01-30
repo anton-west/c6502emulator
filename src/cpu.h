@@ -5,6 +5,17 @@
 
 //struct to hold information of opcode execution
 
+enum cpu_flags {
+    flag_C = 1 << 0,
+    flag_Z = 1 << 1,
+    flag_I = 1 << 2,
+    flag_D = 1 << 3,
+    flag_B = 1 << 4,
+    flag_U = 1 << 5,
+    flag_V = 1 << 6,
+    flag_N = 1 << 7,
+};
+
 typedef struct Processor {
     uint16_t pc;
     uint8_t sp;
@@ -36,6 +47,7 @@ typedef struct Processor {
     (PLP or RTI). The break flag is not accessed by the CPU at anytime and there is no internal representation.
     Its purpose is more for patching,
     to discern an interrupt caused by a BRK instruction from a normal interrupt initiated by hardware.
+    (https://www.masswerk.at/6502/6502_instruction_set.html)
     */
 
     uint8_t status_reg;
@@ -64,6 +76,8 @@ typedef struct InstructionInfo {
 } InstrInfo;
 
 void init_cpu(Processor *cpu);
+
+void cpu_reset(Processor *cpu);
 
 void cpu_set_memory(Processor *cpu, uint8_t *memory);
 

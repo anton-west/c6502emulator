@@ -69,7 +69,6 @@ int main(int argc, char *argv[]) {
     cpu_set_memory(&cpu, memory);
     
     init_cpu(&cpu);
-    cpu.pc = 0x40;
 
     start_display();
 
