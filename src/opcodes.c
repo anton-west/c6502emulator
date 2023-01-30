@@ -244,6 +244,8 @@ void I_BEQ(Processor *cpu, InstrInfo *ir) {
     fetch_target_value(cpu, ir);
     if (getFlag('Z', cpu) == 1) {
         cpu->pc = cpu->abs_addr;
+    } else {
+        cpu->pc += 2;
     }
 }
 void I_BIT(Processor *cpu, InstrInfo *ir) {
@@ -278,6 +280,8 @@ void I_BPL(Processor *cpu, InstrInfo *ir) {
     fetch_target_value(cpu, ir);
     if (getFlag('N', cpu) == 0) {
         cpu->pc = cpu->abs_addr;
+    } else {
+        cpu->pc += 2;
     }
 }
 void I_BRK(Processor *cpu, InstrInfo *ir) {
@@ -313,20 +317,23 @@ void I_BVS(Processor *cpu, InstrInfo *ir) {
 }
 void I_CLC(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "CLC");
-    cpu->pc += 1;
     setFlag('C', 0, cpu);   //clear carry
+    cpu->pc++;
 }
 void I_CLD(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "CLD");
     setFlag('D', 0, cpu);   //clear decimal
+    cpu->pc++;
 }
 void I_CLI(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "CLI");
     setFlag('I', 0, cpu);   //clear interrupt disable
+    cpu->pc++;
 }
 void I_CLV(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "CLV");
     setFlag('V', 0, cpu);   //clear overflow
+    cpu->pc++;
 }
 void I_CMP(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "CMP");
@@ -584,6 +591,7 @@ void I_TAX(Processor *cpu, InstrInfo *ir) {
     cpu->x_reg = cpu->acc;
     setFlag('N', cpu->x_reg & 0x80, cpu);
     setFlag('Z', cpu->x_reg == 0, cpu);
+    cpu->pc += 1;
 }
 void I_TAY(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "TAY");
@@ -608,8 +616,8 @@ void I_TXA(Processor *cpu, InstrInfo *ir) {
 }
 void I_TXS(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "TXS");
-
     cpu->sp = cpu->x_reg;
+    cpu->pc++;
 }
 void I_TYA(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "TYA");
@@ -617,6 +625,7 @@ void I_TYA(Processor *cpu, InstrInfo *ir) {
     cpu->acc = cpu->y_reg;
     setFlag('N', cpu->y_reg & 0x80, cpu);
     setFlag('Z', cpu->y_reg == 0, cpu);
+    cpu->pc += 1;
 }
 
 void U_DEF(Processor *cpu, InstrInfo *ir) {

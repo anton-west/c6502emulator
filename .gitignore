@@ -2,3 +2,5 @@
 c6502
 tests/bin/*
 .vscode
+*.nes
+*.bin

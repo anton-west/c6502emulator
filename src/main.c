@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
 
     //read binary file into memory array
     if (strcmp(argv[1], "-b") == 0) {
-        fread(memory,sizeof(char)*10,1, ptr);
+        fread(memory,sizeof(char)*MAX_MEMORY_ADDR,1, ptr);
     }
 
     //decode text file into memory array
@@ -69,6 +69,7 @@ int main(int argc, char *argv[]) {
     cpu_set_memory(&cpu, memory);
     
     init_cpu(&cpu);
+    cpu.pc = 0x0400;
 
     start_display();
 
@@ -78,7 +79,7 @@ int main(int argc, char *argv[]) {
 
         //print info to display
         print_to_win(win_1, memory, 0, 64);
-        print_to_win(win_2, memory, 64, 64);
+        print_to_win(win_2, memory, 0x0400, 64);
 
         print_to_win_sr(cpu.status_reg);
         print_to_win_cpu(&cpu);
