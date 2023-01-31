@@ -180,62 +180,82 @@ int print_to_win_stack(uint8_t *stack, uint8_t stack_pointer) {
     return 0;
 }
 
-//TODO: implement proper decoding of machine code
-int print_and_decode(InstrInfo *ir_arr, size_t n_ir) {
-    
-    for (size_t i = 0; i < n_ir; i++) {
-
-        //all the addr modes: UDF, ACC, ABS, ABX, ABY, IMM, IMP, IND, IDX, IDY, REL, ZPG, ZPX, ZPY
-        char addr_mode[10];
-        switch ((ir_arr + i)->addr_mode)
-        {
-        case ACC:
-            strcpy(addr_mode,"ACC");
-            break;
-        case ABS:
-            strcpy(addr_mode,"ABS");
-            break;
-        case ABX:
-            strcpy(addr_mode,"ABX");
-            break;
-        case ABY:
-            strcpy(addr_mode,"ABY");
-            break;
-        case IMM:
-            strcpy(addr_mode,"IMM");
-            break;
-        case IMP:
-            strcpy(addr_mode,"IMP");
-            break;
-        case IND:
-            strcpy(addr_mode,"IND");
-            break;
-        case IDX:
-            strcpy(addr_mode,"IDX");
-            break;
-        case IDY:
-            strcpy(addr_mode,"IDY");
-            break;
-        case REL:
-            strcpy(addr_mode,"REL");
-            break;
-        case ZPG:
-            strcpy(addr_mode,"ZPG");
-            break;
-        case ZPX:
-            strcpy(addr_mode,"ZPX");
-            break;
-        case ZPY:
-            strcpy(addr_mode,"ZPY");
-            break;
-        default:
-            strcpy(addr_mode, "UDF");
-            break;
+int mvwprintw_ir(WINDOW* win, int y_coord, int x_coord, InstrInfo *ir) {
+    box(win, 0 , 0);	
+    //remember, 6502 is little-endian, byte 3 is before byte 2 when looking at addresses
+    switch (ir->addr_mode)
+    {
+    case ACC:
+        mvwprintw(win, y_coord,x_coord, "$%04X   %s A", ir->abs_addr, ir->opcode_mnemonic);
+        break;
+    case ABS:
+        mvwprintw(win, y_coord,x_coord, "$%04X   %s $%02X%02X {ABS}", ir->abs_addr, ir->opcode_mnemonic, ir->byte_3, ir->byte_2);
+        break;
+    case ABX:
+        mvwprintw(win, y_coord,x_coord, "$%04X   %s $%02X%02X, X {ABX}", ir->abs_addr, ir->opcode_mnemonic, ir->byte_3, ir->byte_2);
+        break;
+    case ABY:
+        mvwprintw(win, y_coord,x_coord, "$%04X   %s $%02X%02X, Y {ABY}", ir->abs_addr, ir->opcode_mnemonic, ir->byte_3, ir->byte_2);
+        break;
+    case IMM:
+        mvwprintw(win, y_coord,x_coord, "$%04X   %s #$%02X {IMM}", ir->abs_addr, ir->opcode_mnemonic, ir->byte_2);
+        break;
+    case IMP:
+        mvwprintw(win, y_coord,x_coord, "$%04X   %s {IMP}", ir->abs_addr, ir->opcode_mnemonic);
+        break;
+    case IND:
+        mvwprintw(win, y_coord,x_coord, "$%04X   %s ($%02X%02X) {IND}", ir->abs_addr, ir->opcode_mnemonic, ir->byte_3, ir->byte_2);
+        break;
+    case IDX:
+        mvwprintw(win, y_coord,x_coord, "$%04X   %s ($%02X, X) {IDX}", ir->abs_addr, ir->opcode_mnemonic, ir->byte_2);
+        break;
+    case IDY:
+        mvwprintw(win, y_coord,x_coord, "$%04X   %s ($%02X), Y {IDY}", ir->abs_addr, ir->opcode_mnemonic, ir->byte_2);
+        break;
+    case REL:
+        //requires block and step wise declaration due to bits acting weird when written inline
+        {   
+            uint16_t adr = (uint16_t)ir->abs_addr & 0xFFFF;
+            uint8_t byte2 = (uint16_t)ir->byte_2;
+            uint16_t byte2_ext = ((byte2 & 0x80) > 0) ? (0xFF00 | byte2) : byte2;
+            uint16_t result = adr + byte2_ext + 2;
+            mvwprintw(win, y_coord,x_coord, "$%04X   %s $%02X [$%04X] {REL}", ir->abs_addr, ir->opcode_mnemonic, byte2, result);
         }
-        mvwprintw(win_decode, 1,1, "current instruction:");
-        mvwprintw(win_decode, 2+i,1, "  %s %s", (ir_arr + i)->opcode_mnemonic, addr_mode);
-        
+        break;
+    case ZPG:
+        mvwprintw(win, y_coord,x_coord, "$%04X   %s $%02X {ZPG}", ir->abs_addr, ir->opcode_mnemonic, ir->byte_2);
+        break;
+    case ZPX:
+        mvwprintw(win, y_coord,x_coord, "$%04X   %s $%02X, X {ZPG}", ir->abs_addr, ir->opcode_mnemonic, ir->byte_2);
+        break;
+    case ZPY:
+        mvwprintw(win, y_coord,x_coord, "$%04X   %s $%02X, Y {ZPG}", ir->abs_addr, ir->opcode_mnemonic, ir->byte_2);
+        break;
+    default:
+        mvwprintw(win, y_coord,x_coord, "$%04X   %s {UDF}", ir->abs_addr, ir->opcode_mnemonic);
+        break;
     }
+    return 0;
+}
+
+int print_disassembly(uint8_t *memory, uint16_t pc) {
+    uint16_t offset = 0;
+    //print 20 instruction
+    for (size_t i = 0; i < 20; i++)
+    {   
+        InstrInfo ir = disassemble(memory, pc + offset);
+        
+        if(offset == 0) {
+            wattrset(win_decode, A_STANDOUT);
+        } else {
+            wattroff(win_decode, A_STANDOUT);
+        }
+        mvwprintw_ir(win_decode, 1+i, 1, &ir);
+
+        offset += ir.n_bytes;
+
+    }
+
     wrefresh(win_decode);
     return 0;
 }
@@ -262,7 +282,7 @@ int start_display() {
     win_sr = create_newwin(10, 12, starty + 12, startx);
     win_cpu = create_newwin(10, 17, starty + 12, startx + 12);
     win_stack = create_newwin(10, 45, starty + 12, startx + 29);
-    win_decode = create_newwin(22, 30, starty, startx + 81);
+    win_decode = create_newwin(22, 31, starty, startx + 81);
 	/* Show that box 		            */
 
     mvwprintw(stdscr, starty-6, startx, "SPACE: cycle 1 instruction");
@@ -278,11 +298,13 @@ int start_display() {
 }
 
 int close_display() {
+   
     destroy_win(win_1);
     destroy_win(win_2);
     destroy_win(win_sr);
     destroy_win(win_cpu);
     destroy_win(win_stack);
+    destroy_win(win_decode);
 		
 	endwin();			/* End curses mode		  */
 	return 0;

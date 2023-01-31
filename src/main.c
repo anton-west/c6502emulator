@@ -41,12 +41,12 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
     
-    //0xA9, 2, 0x69, 5, 0x38, 0xE9, 3
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
+    uint8_t temp_memory[ MAX_MEMORY_ADDR ] = {0};
 
     //read binary file into memory array
     if (strcmp(argv[1], "-b") == 0) {
-        fread(memory,sizeof(char)*MAX_MEMORY_ADDR,1, ptr);
+        fread((temp_memory),sizeof(char)*MAX_MEMORY_ADDR,1, ptr);
     }
 
     //decode text file into memory array
@@ -62,6 +62,12 @@ int main(int argc, char *argv[]) {
             i++;
         }
     }
+
+    for (int i = 0; i < 0x4000; i++ ) {
+        memory[0x8000 + i] = temp_memory[0x0010 + i];
+        memory[0xC000 + i] = temp_memory[0x0010 + i];
+    }
+
     InstrInfo current_instruction = {0};
     
     Processor cpu = {0};
@@ -69,22 +75,28 @@ int main(int argc, char *argv[]) {
     cpu_set_memory(&cpu, memory);
     
     init_cpu(&cpu);
-    cpu.pc = 0x0400;
+    cpu.pc = 0x0040;
 
     start_display();
 
     char c;
     int cont = 1;
+    int extra_offset = 0;
     while (cont) {
 
+        //clear screens
+        werase(win_decode);
+
+        
         //print info to display
         print_to_win(win_1, memory, 0, 64);
-        print_to_win(win_2, memory, 0x0400, 64);
+        print_to_win(win_2, memory, 0x0040, 64);
 
         print_to_win_sr(cpu.status_reg);
         print_to_win_cpu(&cpu);
         print_to_win_stack(memory, cpu.sp);
-        print_and_decode(&current_instruction,1);
+
+        print_disassembly(memory, cpu.pc);
         
         refresh();
 

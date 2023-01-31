@@ -13,6 +13,8 @@ void fetch_target_value(Processor *cpu, InstrInfo *ir);
 //function, addressmode, instruction byte size, and cycle count of the corresponding instruction
 InstrInfo decode_instruction(uint8_t byte);
 
+InstrInfo disassemble(uint8_t *mem, uint16_t abs_addr);
+
 //opcode declarations
 void I_ADC(Processor *cpu, InstrInfo *ir);
 void I_AND(Processor *cpu, InstrInfo *ir);

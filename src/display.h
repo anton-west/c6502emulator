@@ -23,6 +23,6 @@ int print_to_win(WINDOW *win, uint8_t* data, unsigned int data_start, int data_n
 int print_to_win_sr(uint8_t status_register);
 int print_to_win_cpu(Processor *cpu);
 int print_to_win_stack(uint8_t *stack, uint8_t stack_pointer);
-int print_and_decode(InstrInfo *ir_arr, size_t n_ir);
+int print_disassembly(uint8_t *memory, uint16_t pc);
 
 #endif

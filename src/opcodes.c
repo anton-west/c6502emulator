@@ -230,6 +230,8 @@ void I_BCC(Processor *cpu, InstrInfo *ir) {
     fetch_target_value(cpu, ir);
     if (getFlag('C', cpu) == 0) {
         cpu->pc = cpu->abs_addr;
+    } else {
+        cpu->pc += 2;
     }
 }
 void I_BCS(Processor *cpu, InstrInfo *ir) {
@@ -237,6 +239,8 @@ void I_BCS(Processor *cpu, InstrInfo *ir) {
     fetch_target_value(cpu, ir);
     if (getFlag('C', cpu) == 1) {
         cpu->pc = cpu->abs_addr;
+    } else {
+        cpu->pc += 2;
     }
 }
 void I_BEQ(Processor *cpu, InstrInfo *ir) {
@@ -564,10 +568,12 @@ void I_SEC(Processor *cpu, InstrInfo *ir) {
 }
 void I_SED(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "SED");
+    cpu->pc += 1;
     setFlag('D', 1, cpu);   //set decimal bit
 }
 void I_SEI(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "SEI");
+    cpu->pc += 1;
     setFlag('I', 1, cpu);   //set interrupt disable bit
 }
 void I_STA(Processor *cpu, InstrInfo *ir) {
@@ -741,8 +747,34 @@ InstrInfo decode_instruction(uint8_t byte) {
     address_mode addr_mode = address_mode_matrix[byte];
     unsigned int n_bytes = byte_matrix[byte];
     unsigned int n_cycles = cycle_matrix[byte];
-    InstrInfo ret_ir = {ptr, addr_mode, n_bytes, n_cycles, "UDF"};
+    InstrInfo ret_ir = {ptr, addr_mode, n_bytes, n_cycles, 0, 0, 0,"UDF"};
     strcpy(ret_ir.opcode_mnemonic, opcode_str_matrix[byte]);
+
+    return ret_ir;
+}
+
+/* Disassemble one opcode with info being returned in an InstrInfo struct.
+ * Struct will contain necessary info for printing debug information.
+ * Pass as argument ptr to byte in memory that corresponds to valid opcode
+ */
+InstrInfo disassemble(uint8_t *mem, uint16_t abs_addr) {
+    opcode ptr = opcode_matrix[*(mem + abs_addr)];
+    address_mode addr_mode = address_mode_matrix[*(mem + abs_addr)];
+    unsigned int n_bytes = byte_matrix[*(mem + abs_addr)];
+    unsigned int n_cycles = cycle_matrix[*(mem + abs_addr)];
+
+    uint8_t byte_2 = 0;
+    uint8_t byte_3 = 0;     //populate the following 2 bytes with values from memory, if they are part of instruction, this allows for easy disassembly later
+
+    if (n_bytes == 3) {
+        byte_2 = *(mem + abs_addr + 1);
+        byte_3 = *(mem + abs_addr + 2);
+    } else if (n_bytes == 2) {
+        byte_2 = *(mem + abs_addr + 1);
+    }
+
+    InstrInfo ret_ir = {ptr, addr_mode, n_bytes, n_cycles, byte_2, byte_3, abs_addr, "UDF"};
+    strcpy(ret_ir.opcode_mnemonic, opcode_str_matrix[*(mem + abs_addr)]);
 
     return ret_ir;
 }
