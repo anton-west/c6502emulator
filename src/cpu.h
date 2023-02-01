@@ -72,6 +72,7 @@ typedef struct InstructionInfo {
     address_mode addr_mode;
     unsigned int n_bytes;
     unsigned int n_cycles;
+    uint8_t byte_1;
     uint8_t byte_2;
     uint8_t byte_3;
     uint16_t abs_addr;  //save the absolute address of this opcode, makes disassembly easier when known

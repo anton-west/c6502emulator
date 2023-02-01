@@ -24,7 +24,7 @@ void cpu_reset(Processor *cpu) {
     //The internal state of the CPU now shows that SP is 0xFD,
     //because it got decremented 3 times from 0x00 to 0xFD during reset.
     cpu->sp = 0xFD;
-    cpu->status_reg = 0 | flag_U;   //unused flag is always high when status reg is pushed to stack, can be high in all the time as it has no effect on cpu operation
+    cpu->status_reg = 0 | flag_U | flag_I;   //unused flag is always high when status reg is pushed to stack, can be high in all the time as it has no effect on cpu operation
 
     //clear helper variables
     cpu->abs_addr = 0;

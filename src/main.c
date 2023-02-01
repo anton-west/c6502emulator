@@ -75,14 +75,15 @@ int main(int argc, char *argv[]) {
     cpu_set_memory(&cpu, memory);
     
     init_cpu(&cpu);
-    cpu.pc = 0x0040;
+    
+    cpu.pc = 0xC000;
 
     start_display();
 
     char c;
     int cont = 1;
-    int extra_offset = 0;
-    while (cont) {
+    unsigned cycles = 0;
+    while (cont && cycles < 30000) {
 
         //clear screens
         werase(win_decode);
@@ -90,19 +91,19 @@ int main(int argc, char *argv[]) {
         
         //print info to display
         print_to_win(win_1, memory, 0, 64);
-        print_to_win(win_2, memory, 0x0040, 64);
+        print_to_win(win_2, memory, 0xC000-16, 64);
 
         print_to_win_sr(cpu.status_reg);
         print_to_win_cpu(&cpu);
         print_to_win_stack(memory, cpu.sp);
 
-        print_disassembly(memory, cpu.pc);
+        print_disassembly(memory, cpu.pc-14 , cpu.pc);
         
         refresh();
 
-        c = getch();
+        //c = getch();
 
-        switch (c)
+        switch ('s')
         {
         case 'q':
             cont = 0;
@@ -120,6 +121,7 @@ int main(int argc, char *argv[]) {
 
         case 's':
             cpu_clock(&cpu, &current_instruction);
+            cycles++;
             break;
         
         case 'r':
@@ -136,6 +138,13 @@ int main(int argc, char *argv[]) {
         default:
             break;
         }
+
+        //if cpu clock 0, print to log
+        if(cpu.cycles == 0) {
+            InstrInfo info_out = disassemble(memory, cpu.pc);
+            print_ir(&info_out, &cpu);
+        }
+        
 
     }
 

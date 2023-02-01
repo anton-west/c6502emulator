@@ -4,3 +4,4 @@ tests/bin/*
 .vscode
 *.nes
 *.bin
+*.csv

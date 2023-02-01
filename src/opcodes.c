@@ -267,6 +267,8 @@ void I_BMI(Processor *cpu, InstrInfo *ir) {
     fetch_target_value(cpu, ir);
     if (getFlag('N', cpu) == 1) {
         cpu->pc = cpu->abs_addr;
+    } else {
+        cpu->pc += 2;
     }
 }
 void I_BNE(Processor *cpu, InstrInfo *ir) {
@@ -310,13 +312,17 @@ void I_BVC(Processor *cpu, InstrInfo *ir) {
     fetch_target_value(cpu, ir);
     if (getFlag('V', cpu) == 0) {
         cpu->pc = cpu->abs_addr;
+    } else {
+        cpu->pc += 2;
     }
 }
 void I_BVS(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "BVC");
     fetch_target_value(cpu, ir);
-    if (getFlag('V', cpu) == 01) {
+    if (getFlag('V', cpu) == 1) {
         cpu->pc = cpu->abs_addr;
+    } else {
+        cpu->pc += 2;
     }
 }
 void I_CLC(Processor *cpu, InstrInfo *ir) {
@@ -408,12 +414,14 @@ void I_INX(Processor *cpu, InstrInfo *ir) {
     cpu->x_reg++;
     setFlag('N', cpu->x_reg & 0x80, cpu);
     setFlag('Z', cpu->x_reg == 0, cpu);
+    cpu->pc++;
 }
 void I_INY(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "INY");
     cpu->y_reg++;
     setFlag('N', cpu->y_reg & 0x80, cpu);
     setFlag('Z', cpu->y_reg == 0, cpu);
+    cpu->pc++;
 }
 void I_JMP(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "JMP");
@@ -481,25 +489,30 @@ void I_PHA(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "PHA");
     cpu_write(cpu, 0x0100 | cpu->sp, cpu->acc);
     cpu->sp--;
+    cpu->pc++;
 }
 void I_PHP(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "PHP");
     cpu_write(cpu, 0x0100 | cpu->sp, cpu->status_reg | (flag_U | flag_B));
     cpu->sp--;
+    cpu->pc++;
 }
 void I_PLA(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "PLA");
-    cpu->acc = cpu_read(cpu, 0x0100 | cpu->sp);
     cpu->sp++;
+    cpu->acc = cpu_read(cpu, 0x0100 | cpu->sp);
     setFlag('N', cpu->acc & 0x80, cpu);
     setFlag('Z', cpu->acc == 0, cpu);
+    cpu->pc++;
 }
 void I_PLP(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "PHP");
-    cpu->status_reg = cpu_read(cpu, 0x0100 | cpu->sp);
     cpu->sp++;
+    cpu->status_reg = cpu_read(cpu, 0x0100 | cpu->sp);
 
-    cpu->status_reg &= ~(flag_U | flag_B); //ignore unused and break;
+    cpu->status_reg &= ~(flag_B); //ignore break flag
+    cpu->status_reg |= flag_U; //set unused flag
+    cpu->pc++;
 }
 void I_ROL(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "ROL");  
@@ -558,7 +571,7 @@ void I_SBC(Processor *cpu, InstrInfo *ir) {
     setFlag('C', result > 255, cpu);
     setFlag('Z', (result & 0x00FF) == 0, cpu);
     setFlag('N', result & 0x80, cpu);
-    setFlag('V', ( ( (uint16_t)cpu->acc ^ (uint16_t)result ) & ~( (uint16_t)cpu->acc ^ (uint16_t)cpu->fetched_value ) ) & 0x0080, cpu);
+    setFlag('V', ( ( result ^ (uint16_t)cpu->acc ) & ( ( result ^ (uint16_t)value_inv ) ) & 0x0080), cpu);
     cpu->acc = (uint8_t) (result & 0x00FF);
 }
 void I_SEC(Processor *cpu, InstrInfo *ir) {
@@ -597,7 +610,7 @@ void I_TAX(Processor *cpu, InstrInfo *ir) {
     cpu->x_reg = cpu->acc;
     setFlag('N', cpu->x_reg & 0x80, cpu);
     setFlag('Z', cpu->x_reg == 0, cpu);
-    cpu->pc += 1;
+    cpu->pc++;
 }
 void I_TAY(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "TAY");
@@ -605,6 +618,7 @@ void I_TAY(Processor *cpu, InstrInfo *ir) {
     cpu->y_reg = cpu->acc;
     setFlag('N', cpu->y_reg & 0x80, cpu);
     setFlag('Z', cpu->y_reg == 0, cpu);
+    cpu->pc++;
 }
 void I_TSX(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "TSX");
@@ -612,6 +626,7 @@ void I_TSX(Processor *cpu, InstrInfo *ir) {
     cpu->x_reg = cpu->sp;
     setFlag('N', cpu->x_reg & 0x80, cpu);
     setFlag('Z', cpu->x_reg == 0, cpu);
+    cpu->pc++;
 }
 void I_TXA(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "TXA");
@@ -619,6 +634,7 @@ void I_TXA(Processor *cpu, InstrInfo *ir) {
     cpu->acc = cpu->x_reg;
     setFlag('N', cpu->x_reg & 0x80, cpu);
     setFlag('Z', cpu->x_reg == 0, cpu);
+    cpu->pc++;
 }
 void I_TXS(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "TXS");
@@ -747,7 +763,7 @@ InstrInfo decode_instruction(uint8_t byte) {
     address_mode addr_mode = address_mode_matrix[byte];
     unsigned int n_bytes = byte_matrix[byte];
     unsigned int n_cycles = cycle_matrix[byte];
-    InstrInfo ret_ir = {ptr, addr_mode, n_bytes, n_cycles, 0, 0, 0,"UDF"};
+    InstrInfo ret_ir = {ptr, addr_mode, n_bytes, n_cycles, 0, 0, 0, 0,"UDF"};
     strcpy(ret_ir.opcode_mnemonic, opcode_str_matrix[byte]);
 
     return ret_ir;
@@ -763,6 +779,7 @@ InstrInfo disassemble(uint8_t *mem, uint16_t abs_addr) {
     unsigned int n_bytes = byte_matrix[*(mem + abs_addr)];
     unsigned int n_cycles = cycle_matrix[*(mem + abs_addr)];
 
+    uint8_t byte_1 = *(mem + abs_addr);
     uint8_t byte_2 = 0;
     uint8_t byte_3 = 0;     //populate the following 2 bytes with values from memory, if they are part of instruction, this allows for easy disassembly later
 
@@ -773,7 +790,7 @@ InstrInfo disassemble(uint8_t *mem, uint16_t abs_addr) {
         byte_2 = *(mem + abs_addr + 1);
     }
 
-    InstrInfo ret_ir = {ptr, addr_mode, n_bytes, n_cycles, byte_2, byte_3, abs_addr, "UDF"};
+    InstrInfo ret_ir = {ptr, addr_mode, n_bytes, n_cycles, byte_1 ,byte_2, byte_3, abs_addr, "UDF"};
     strcpy(ret_ir.opcode_mnemonic, opcode_str_matrix[*(mem + abs_addr)]);
 
     return ret_ir;

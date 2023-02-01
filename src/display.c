@@ -238,21 +238,100 @@ int mvwprintw_ir(WINDOW* win, int y_coord, int x_coord, InstrInfo *ir) {
     return 0;
 }
 
-int print_disassembly(uint8_t *memory, uint16_t pc) {
-    uint16_t offset = 0;
+int print_ir(InstrInfo *ir, Processor *cpu) {
+    switch (ir->addr_mode)
+    {
+    case ACC:
+        fprintf(stderr, "%04X %02X %s A      A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->opcode_mnemonic, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
+        break;
+    case ABS:
+        fprintf(stderr, "%04X %02X %02X %02X   %s $%02X%02X {ABS}        A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->byte_2, ir->byte_3, ir->opcode_mnemonic, ir->byte_3, ir->byte_2, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
+        break;
+    case ABX:
+        fprintf(stderr, "%04X %02X %02X %02X %s $%02X%02X {ABX}          A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->byte_2, ir->byte_3, ir->opcode_mnemonic, ir->byte_3, ir->byte_2, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
+        break;
+    case ABY:
+        fprintf(stderr, "%04X %02X %02X %02X %s $%02X%02X {ABY}          A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->byte_2, ir->byte_3, ir->opcode_mnemonic, ir->byte_3, ir->byte_2, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
+        break;
+    case IMM:
+        fprintf(stderr, "%04X %02X %02X    %s #$%02X {IMM}        A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->byte_2, ir->opcode_mnemonic, ir->byte_2, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
+        break;
+    case IMP:
+        fprintf(stderr, "%04X %02X     %s {IMP}         A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->opcode_mnemonic, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
+        break;
+    case IND:
+        fprintf(stderr, "%04X %02X %02X %02X %s ($%02X%02X) {IND}      A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->byte_2, ir->byte_3, ir->opcode_mnemonic, ir->byte_3, ir->byte_2, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
+        break;
+    case IDX:
+        fprintf(stderr, "%04X %02X %02X    %s ($%02X,X) {IDX}      A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->byte_2, ir->opcode_mnemonic, ir->byte_2, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
+        break;
+    case IDY:
+        fprintf(stderr, "%04X %02X %02X    %s ($%02X),Y {IDY}      A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->byte_2, ir->opcode_mnemonic, ir->byte_2, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
+        break;
+    case REL:
+        //requires block and step wise declaration due to bits acting weird when written inline
+        {   
+            uint16_t adr = (uint16_t)ir->abs_addr & 0xFFFF;
+            uint8_t byte2 = (uint16_t)ir->byte_2;
+            uint16_t byte2_ext = ((byte2 & 0x80) > 0) ? (0xFF00 | byte2) : byte2;
+            uint16_t result = adr + byte2_ext + 2;
+            fprintf(stderr, "%04X %02X %02X    %s $%02X [$%04X] {REL}       A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->byte_2, ir->opcode_mnemonic, byte2, result, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
+        }
+        break;
+    case ZPG:
+        fprintf(stderr, "%04X %02X %02X    %s $%02X {ZPG}        A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->byte_2, ir->opcode_mnemonic, ir->byte_2, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
+        break;
+    case ZPX:
+        fprintf(stderr, "%04X %02X %02X    %s $%02X {ZPX}        A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->byte_2, ir->opcode_mnemonic, ir->byte_2, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
+        break;
+    case ZPY:
+        fprintf(stderr, "%04X %02X %02X    %s $%02X {ZPY}        A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->byte_2, ir->opcode_mnemonic, ir->byte_2, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
+        break;
+    default:
+        fprintf(stderr, "%04X   %s {UDF}\n", ir->abs_addr, ir->opcode_mnemonic);
+        break;
+    }
+    return 0;
+}
+
+/* As disassembly is done on the fly from "behind the pc and up to few instructions after, if 
+ * the "start" address lands on data byte instead of opcode byte, then strange things can happen and
+ * disassembly can be done wrong. Most often data byte is mapped to undefined instruction and start pointer
+ * is moved forward until it lands on valid instruction. However, this does not always happen
+ * 
+ * This means that one should not trust instructions before the pc to be disassembled correctly
+ * instructions on pc and forward are always disassembled correctly
+ * 
+ * If pc instruction is not shown(highlighted in window) then dissasembly has gone wrong
+ */
+int print_disassembly(uint8_t *memory, uint16_t start, uint16_t pc) {
+    
+    //start at valid region in memory, in nes system 0x8000 and 0xC000 forward is reserved for prog data
+    int abs_addr = own_max(start, 0xC000);
+    int passed_pc = 0;
+
     //print 20 instruction
     for (size_t i = 0; i < 20; i++)
     {   
-        InstrInfo ir = disassemble(memory, pc + offset);
-        
-        if(offset == 0) {
+        /* This if statement is to make sure that if we get really unlucky and interpret data bytes before pc as valid instructions,
+         * we might jump over the pc and completely miss interpreting the instruction at pc. Therefore we check if we have landed or passed
+         * pc, and then set the abs_address to pc, so that instruction at pc is definetely interpreted correctly(all instructions afterward 
+         * are also interpreted correctly this way, as long as opcode logic is correct)
+         */
+        if(abs_addr >= pc && passed_pc == 0) {
+            passed_pc = 1;
+            abs_addr = pc;
             wattrset(win_decode, A_STANDOUT);
         } else {
             wattroff(win_decode, A_STANDOUT);
         }
+        InstrInfo ir = disassemble(memory, abs_addr);
         mvwprintw_ir(win_decode, 1+i, 1, &ir);
 
-        offset += ir.n_bytes;
+        abs_addr += ir.n_bytes;
+        if(ir.addr_mode == UDF) {
+            abs_addr += 1;
+        }
 
     }
 
@@ -281,7 +360,7 @@ int start_display() {
     win_2 = create_newwin(6, 81, starty + 6, startx);
     win_sr = create_newwin(10, 12, starty + 12, startx);
     win_cpu = create_newwin(10, 17, starty + 12, startx + 12);
-    win_stack = create_newwin(10, 45, starty + 12, startx + 29);
+    win_stack = create_newwin(10, 52, starty + 12, startx + 29);
     win_decode = create_newwin(22, 31, starty, startx + 81);
 	/* Show that box 		            */
 
