@@ -242,13 +242,13 @@ int print_ir(InstrInfo *ir, Processor *cpu) {
     switch (ir->addr_mode)
     {
     case ACC:
-        fprintf(stderr, "%04X %02X %s A      A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->opcode_mnemonic, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
+        fprintf(stderr, "%04X %02X     %s A         A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->opcode_mnemonic, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
         break;
     case ABS:
         fprintf(stderr, "%04X %02X %02X %02X   %s $%02X%02X {ABS}        A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->byte_2, ir->byte_3, ir->opcode_mnemonic, ir->byte_3, ir->byte_2, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
         break;
     case ABX:
-        fprintf(stderr, "%04X %02X %02X %02X %s $%02X%02X {ABX}          A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->byte_2, ir->byte_3, ir->opcode_mnemonic, ir->byte_3, ir->byte_2, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
+        fprintf(stderr, "%04X %02X %02X %02X   %s $%02X%02X {ABX}        A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->byte_2, ir->byte_3, ir->opcode_mnemonic, ir->byte_3, ir->byte_2, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
         break;
     case ABY:
         fprintf(stderr, "%04X %02X %02X %02X %s $%02X%02X {ABY}          A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->byte_2, ir->byte_3, ir->opcode_mnemonic, ir->byte_3, ir->byte_2, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
@@ -260,13 +260,13 @@ int print_ir(InstrInfo *ir, Processor *cpu) {
         fprintf(stderr, "%04X %02X     %s {IMP}         A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->opcode_mnemonic, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
         break;
     case IND:
-        fprintf(stderr, "%04X %02X %02X %02X %s ($%02X%02X) {IND}      A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->byte_2, ir->byte_3, ir->opcode_mnemonic, ir->byte_3, ir->byte_2, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
+        fprintf(stderr, "%04X %02X %02X %02X   %s ($%02X%02X) {IND}        A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->byte_2, ir->byte_3, ir->opcode_mnemonic, ir->byte_3, ir->byte_2, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
         break;
     case IDX:
-        fprintf(stderr, "%04X %02X %02X    %s ($%02X,X) {IDX}      A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->byte_2, ir->opcode_mnemonic, ir->byte_2, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
+        fprintf(stderr, "%04X %02X %02X    %s ($%02X,X) {IDX}        A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->byte_2, ir->opcode_mnemonic, ir->byte_2, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
         break;
     case IDY:
-        fprintf(stderr, "%04X %02X %02X    %s ($%02X),Y {IDY}      A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->byte_2, ir->opcode_mnemonic, ir->byte_2, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
+        fprintf(stderr, "%04X %02X %02X    %s ($%02X),Y {IDY}        A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", ir->abs_addr, ir->byte_1, ir->byte_2, ir->opcode_mnemonic, ir->byte_2, cpu->acc, cpu->x_reg, cpu->y_reg, cpu->status_reg, cpu->sp);
         break;
     case REL:
         //requires block and step wise declaration due to bits acting weird when written inline

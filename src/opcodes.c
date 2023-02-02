@@ -143,16 +143,17 @@ void fetch_target_value(Processor *cpu, InstrInfo *ir) {
     
     case IND:
         {
-            uint16_t abs_addr_low = cpu_read(cpu, cpu->pc + 1);
-            uint16_t abs_addr_high = cpu_read(cpu, cpu->pc + 2);
-            uint16_t abs_addr = abs_addr_low + (abs_addr_high << 8);
+            uint16_t ptr_low = cpu_read(cpu, cpu->pc + 1);
+            uint16_t ptr_high = cpu_read(cpu, cpu->pc + 2);
+            uint16_t ptr = ptr_low + (ptr_high << 8);
 
-            uint16_t addr_low = cpu_read(cpu, abs_addr);
-            uint16_t addr_high = cpu_read(cpu, abs_addr + 1);
-            uint16_t trg_addr = addr_low + (addr_high << 8);
-            cpu->pc += 3;
-            cpu->abs_addr =  trg_addr;
-            cpu->fetched_value = cpu_read(cpu, cpu->abs_addr);
+            //page boundary hardware bug simulation
+            if (ptr_low == 0x00FF) {
+                cpu->abs_addr = (cpu_read(cpu, ptr & 0xFF00) << 8) | cpu_read(cpu, ptr + 0);
+            } else {
+                cpu->abs_addr = (cpu_read(cpu, ptr +1) << 8) | cpu_read(cpu, ptr + 0);
+            }
+
             break;
         }
 
@@ -506,7 +507,7 @@ void I_PLA(Processor *cpu, InstrInfo *ir) {
     cpu->pc++;
 }
 void I_PLP(Processor *cpu, InstrInfo *ir) {
-    strcpy(ir->opcode_mnemonic, "PHP");
+    strcpy(ir->opcode_mnemonic, "PLP");
     cpu->sp++;
     cpu->status_reg = cpu_read(cpu, 0x0100 | cpu->sp);
 
@@ -528,20 +529,21 @@ void I_ROL(Processor *cpu, InstrInfo *ir) {
 void I_ROR(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "ROR");  
     fetch_target_value(cpu, ir);
-    uint8_t carry_flag_value = cpu->fetched_value & 0x01; //carry flag value is the bit that is getting shifted out
-    uint8_t new_value = (cpu->fetched_value >> 1) | ((cpu->fetched_value & 0x01 ) << 7); //shift right and insert bit zero on left
+    uint8_t new_carry_flag_value = cpu->fetched_value & 0x01; //carry flag value is the bit that is getting shifted out
+    uint8_t new_value = (cpu->fetched_value >> 1) | ((getFlag('C',cpu)) << 7); //shift right and insert bit zero on left
     if (ir->addr_mode == ACC) {cpu->acc = new_value;} else {cpu_write(cpu, cpu->abs_addr, new_value);}   
 
     setFlag('N', new_value & 0x80, cpu);
     setFlag('Z', new_value == 0, cpu);
-    setFlag('C', carry_flag_value, cpu);    //set shifted out bit as new carry}
+    setFlag('C', new_carry_flag_value, cpu);    //set shifted out bit as new carry}
 }
 void I_RTI(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "RTI");
     cpu->sp++;
     cpu->status_reg = cpu_read(cpu, 0x0100 | cpu->sp);
-    //B and U ignored, set to 0
-    cpu->status_reg &= ~(flag_U | flag_B);
+    //B ignored
+    cpu->status_reg &= ~(flag_B);
+    cpu->status_reg |= flag_U;
 
     cpu->sp++;
     uint16_t low_byte = cpu_read(cpu, 0x0100 | cpu->sp);

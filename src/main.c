@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
 
         
         //print info to display
-        print_to_win(win_1, memory, 0, 64);
+        print_to_win(win_1, memory, 0x0000, 64);
         print_to_win(win_2, memory, 0xC000-16, 64);
 
         print_to_win_sr(cpu.status_reg);
