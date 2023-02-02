@@ -15,7 +15,7 @@ InstrInfo decode_instruction(uint8_t byte);
 
 InstrInfo disassemble(uint8_t *mem, uint16_t abs_addr);
 
-//opcode declarations
+//official opcode declarations
 void I_ADC(Processor *cpu, InstrInfo *ir);
 void I_AND(Processor *cpu, InstrInfo *ir);
 void I_ASL(Processor *cpu, InstrInfo *ir);
@@ -74,5 +74,30 @@ void I_TXS(Processor *cpu, InstrInfo *ir);
 void I_TYA(Processor *cpu, InstrInfo *ir);
 
 void U_DEF(Processor *cpu, InstrInfo *ir);    //UNDEFINED OPCODE, PLACEHOLDER FOR ALL ILLEGAL OPCODES
+
+//illegal opcode declarations
+void I_ALR(Processor *cpu, InstrInfo *ir);
+void I_ANC(Processor *cpu, InstrInfo *ir);
+void I_ANC(Processor *cpu, InstrInfo *ir);
+void I_ANE(Processor *cpu, InstrInfo *ir);
+void I_ARR(Processor *cpu, InstrInfo *ir);
+void I_DCP(Processor *cpu, InstrInfo *ir);
+void I_ISC(Processor *cpu, InstrInfo *ir);
+void I_LAS(Processor *cpu, InstrInfo *ir);
+void I_LAX(Processor *cpu, InstrInfo *ir);
+void I_LXA(Processor *cpu, InstrInfo *ir);
+void I_RLA(Processor *cpu, InstrInfo *ir);
+void I_RRA(Processor *cpu, InstrInfo *ir);
+void I_SAX(Processor *cpu, InstrInfo *ir);
+void I_SBX(Processor *cpu, InstrInfo *ir);
+void I_SHA(Processor *cpu, InstrInfo *ir);
+void I_SHX(Processor *cpu, InstrInfo *ir);
+void I_SHY(Processor *cpu, InstrInfo *ir);
+void I_SLO(Processor *cpu, InstrInfo *ir);
+void I_SRE(Processor *cpu, InstrInfo *ir);
+void I_TAS(Processor *cpu, InstrInfo *ir);
+void I_NOP(Processor *cpu, InstrInfo *ir);
+void I_JAM(Processor *cpu, InstrInfo *ir);
+void I_USB(Processor *cpu, InstrInfo *ir);
 
 #endif

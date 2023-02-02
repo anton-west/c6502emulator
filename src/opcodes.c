@@ -1,7 +1,7 @@
 //uncomment to supress messages
-//#pragma GCC diagnostic ignored "-Wunused-parameter"
-//#pragma GCC diagnostic ignored "-Wunused-value"
-//#pragma GCC diagnostic ignored "-Wreturn-type"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-value"
+#pragma GCC diagnostic ignored "-Wreturn-type"
 
 #include <stdio.h>
 #include <string.h>
@@ -476,7 +476,7 @@ void I_LSR(Processor *cpu, InstrInfo *ir) {
 }
 void I_NOP(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "NOP");
-    cpu->pc++;
+    cpu->pc += ir->n_bytes;
 }
 void I_ORA(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "ORA");
@@ -658,105 +658,221 @@ void U_DEF(Processor *cpu, InstrInfo *ir) {
     cpu->acc=cpu->acc;
 }
 
-opcode opcode_matrix[] = {          I_BRK, I_ORA, U_DEF, U_DEF,     U_DEF, I_ORA, I_ASL, U_DEF,     I_PHP, I_ORA, I_ASL, U_DEF,     U_DEF, I_ORA, I_ASL, U_DEF,
-                                    I_BPL, I_ORA, U_DEF, U_DEF,     U_DEF, I_ORA, I_ASL, U_DEF,     I_CLC, I_ORA, U_DEF, U_DEF,     U_DEF, I_ORA, I_ASL, U_DEF,
-                                    I_JSR, I_AND, U_DEF, U_DEF,     I_BIT, I_AND, I_ROL, U_DEF,     I_PLP, I_AND, I_ROL, U_DEF,     I_BIT, I_AND, I_ROL, U_DEF,
-                                    I_BMI, I_AND, U_DEF, U_DEF,     U_DEF, I_AND, I_ROL, U_DEF,     I_SEC, I_AND, U_DEF, U_DEF,     U_DEF, I_AND, I_ROL, U_DEF,
+// ILLEGAL OPCODES
 
-                                    I_RTI, I_EOR, U_DEF, U_DEF,     U_DEF, I_EOR, I_LSR, U_DEF,     I_PHA, I_EOR, I_LSR, U_DEF,     I_JMP, I_EOR, I_LSR, U_DEF,
-                                    I_BVC, I_EOR, U_DEF, U_DEF,     U_DEF, I_EOR, I_LSR, U_DEF,     I_CLI, I_EOR, U_DEF, U_DEF,     U_DEF, I_EOR, I_LSR, U_DEF,
-                                    I_RTS, I_ADC, U_DEF, U_DEF,     U_DEF, I_ADC, I_ROR, U_DEF,     I_PLA, I_ADC, I_ROR, U_DEF,     I_JMP, I_ADC, I_ROR, U_DEF,
-                                    I_BVS, I_ADC, U_DEF, U_DEF,     U_DEF, I_ADC, I_ROR, U_DEF,     I_SEI, I_ADC, U_DEF, U_DEF,     U_DEF, I_ADC, I_ROR, U_DEF,
+void I_ALR(Processor *cpu, InstrInfo *ir) {
+    fetch_target_value(cpu, ir);
+    uint8_t and_result = cpu->acc & cpu->fetched_value;
 
-                                    U_DEF, I_STA, U_DEF, U_DEF,     I_STY, I_STA, I_STX, U_DEF,     I_DEY, U_DEF, I_TXA, U_DEF,     I_STY, I_STA, I_STX, U_DEF,
-                                    I_BCC, I_STA, U_DEF, U_DEF,     I_STY, I_STA, I_STX, U_DEF,     I_TYA, I_STA, I_TXS, U_DEF,     U_DEF, I_STA, U_DEF, U_DEF,
-                                    I_LDY, I_LDA, I_LDX, U_DEF,     I_LDY, I_LDA, I_LDX, U_DEF,     I_TAY, I_LDA, I_TAX, U_DEF,     I_LDY, I_LDA, I_LDX, U_DEF,
-                                    I_BCS, I_LDA, U_DEF, U_DEF,     I_LDY, I_LDA, I_LDX, U_DEF,     I_CLV, I_LDA, I_TSX, U_DEF,     I_LDY, I_LDA, I_LDX, U_DEF,
+    uint8_t carry_flag_value = and_result & 0x01; //carry flag value is the bit that is getting shifted out
+    uint8_t new_value = and_result >> 1;
+    if (ir->addr_mode == ACC) {cpu->acc = new_value;} else {cpu_write(cpu, cpu->abs_addr, new_value);}   
 
-                                    I_CPY, I_CMP, U_DEF, U_DEF,     I_CPY, I_CMP, I_DEC, U_DEF,     I_INY, I_CMP, I_DEX, U_DEF,     I_CPY, I_CMP, I_DEC, U_DEF,
-                                    I_BNE, I_CMP, U_DEF, U_DEF,     U_DEF, I_CMP, I_DEC, U_DEF,     I_CLD, I_CMP, U_DEF, U_DEF,     U_DEF, I_CMP, I_DEC, U_DEF,
-                                    I_CPX, I_SBC, U_DEF, U_DEF,     I_CPX, I_SBC, I_INC, U_DEF,     I_INX, I_SBC, I_NOP, U_DEF,     I_CPX, I_SBC, I_INC, U_DEF,
-                                    I_BEQ, I_SBC, U_DEF, U_DEF,     U_DEF, I_SBC, I_INC, U_DEF,     I_SED, I_SBC, U_DEF, U_DEF,     U_DEF, I_SBC, I_INC, U_DEF,  };                      
+    setFlag('N', 0, cpu);
+    setFlag('Z', new_value == 0, cpu);
+    setFlag('C', carry_flag_value, cpu);
 
-address_mode address_mode_matrix[] = {  IMP,IDX,UDF,UDF,    UDF,ZPG,ZPG,UDF,    IMP,IMM,ACC,UDF,    UDF,ABS,ABS,UDF,
-                                        REL,IDY,UDF,UDF,    UDF,ZPX,ZPX,UDF,    IMP,ABY,UDF,UDF,    UDF,ABX,ABX,UDF,
-                                        ABS,IDX,UDF,UDF,    ZPG,ZPG,ZPG,UDF,    IMP,IMM,ACC,UDF,    ABS,ABS,ABS,UDF,
-                                        REL,IDY,UDF,UDF,    UDF,ZPX,ZPX,UDF,    IMP,ABY,UDF,UDF,    UDF,ABX,ABX,UDF,
-                                        
-                                        IMP,IDX,UDF,UDF,    UDF,ZPG,ZPG,UDF,    IMP,IMM,ACC,UDF,    ABS,ABS,ABS,UDF,
-                                        REL,IDY,UDF,UDF,    UDF,ZPX,ZPX,UDF,    IMP,ABY,UDF,UDF,    UDF,ABX,ABX,UDF,
-                                        IMP,IDX,UDF,UDF,    UDF,ZPG,ZPG,UDF,    IMP,IMM,ACC,UDF,    IND,ABS,ABS,UDF,
-                                        REL,IDY,UDF,UDF,    UDF,ZPX,ZPX,UDF,    IMP,ABY,UDF,UDF,    UDF,ABX,ABX,UDF,
-                                        
-                                        UDF,IDX,UDF,UDF,    ZPG,ZPG,ZPG,UDF,    IMP,UDF,IMP,UDF,    ABS,ABS,ABS,UDF,
-                                        REL,IDY,UDF,UDF,    ZPX,ZPX,ZPY,UDF,    IMP,ABY,IMP,UDF,    UDF,ABX,UDF,UDF,
-                                        IMM,IDX,IMM,UDF,    ZPG,ZPG,ZPG,UDF,    IMP,IMM,IMP,UDF,    ABS,ABS,ABS,UDF,
-                                        REL,IDY,UDF,UDF,    ZPX,ZPX,ZPY,UDF,    IMP,ABY,IMP,UDF,    ABX,ABX,ABY,UDF,
-                                        
-                                        IMM,IDX,UDF,UDF,    ZPG,ZPG,ZPG,UDF,    IMP,IMM,IMP,UDF,    ABS,ABS,ABS,UDF,
-                                        REL,IDY,UDF,UDF,    UDF,ZPX,ZPX,UDF,    IMP,ABY,UDF,UDF,    UDF,ABX,ABX,UDF,
-                                        IMM,IDX,UDF,UDF,    ZPG,ZPG,ZPG,UDF,    IMP,IMM,IMP,UDF,    ABS,ABS,ABS,UDF,
-                                        REL,IDY,UDF,UDF,    UDF,ZPX,ZPX,UDF,    IMP,ABY,UDF,UDF,    UDF,ABX,ABX,UDF,    };
+}
+void I_ANC(Processor *cpu, InstrInfo *ir) {
+    fetch_target_value(cpu, ir);
+    uint8_t and_result = cpu->acc & cpu->fetched_value;
+    cpu->acc = and_result;
+    setFlag('N', and_result & 0x80, cpu);
+    setFlag('Z', and_result == 0, cpu);
+    setFlag('C', and_result & 0x80, cpu);
 
-unsigned int byte_matrix[] = {  1,2,0,0,    0,2,2,0,    1,2,1,0,    0,3,3,0,
-                                2,2,0,0,    0,2,2,0,    1,3,0,0,    0,3,3,0,
-                                3,2,0,0,    2,2,2,0,    1,2,1,0,    3,3,3,0,
-                                2,2,0,0,    0,2,2,0,    1,3,0,0,    0,3,3,0,
-                                
-                                1,2,0,0,    0,2,2,0,    1,2,1,0,    3,3,3,0,
-                                2,2,0,0,    0,2,2,0,    1,3,0,0,    0,3,3,0,
-                                1,2,0,0,    0,2,2,0,    1,2,1,0,    3,3,3,0,
-                                2,2,0,0,    0,2,2,0,    1,3,0,0,    0,3,3,0,
-                                
-                                0,2,0,0,    2,2,2,0,    1,0,1,0,    3,3,3,0,
-                                2,2,0,0,    2,2,2,0,    1,3,1,0,    0,3,0,0,
-                                2,2,2,0,    2,2,2,0,    1,2,1,0,    3,3,3,0,
-                                2,2,0,0,    2,2,2,0,    1,3,1,0,    3,3,3,0,
-                                
-                                2,2,0,0,    2,2,2,0,    1,2,1,0,    3,3,3,0,
-                                2,2,0,0,    0,2,2,0,    1,3,0,0,    0,3,3,0,
-                                2,2,0,0,    2,2,2,0,    1,2,1,0,    3,3,3,0,
-                                2,2,0,0,    0,2,2,0,    1,3,0,0,    0,3,3,0,    };
+}
+void I_ANE(Processor *cpu, InstrInfo *ir) { ir; } //unstable, do no implement
+void I_ARR(Processor *cpu, InstrInfo *ir) { ir; }
+void I_DCP(Processor *cpu, InstrInfo *ir) {
+    int debug = 0;
+    if(cpu->pc == 0xE949) {
+        debug = 0;
+    }
 
-unsigned int cycle_matrix[] = { 7,6,0,0,    0,3,5,0,    3,2,2,0,    0,4,6,0,
-                                2,5,0,0,    0,4,6,0,    2,4,0,0,    0,4,7,0,
-                                6,6,0,0,    3,3,5,0,    4,2,2,0,    4,4,6,0,
-                                2,5,0,0,    0,4,6,0,    2,4,0,0,    0,4,7,0,
-                                
-                                6,6,0,0,    0,3,5,0,    3,2,2,0,    3,4,6,0,
-                                2,5,0,0,    0,4,6,0,    2,4,0,0,    0,4,7,0,
-                                6,6,0,0,    0,3,5,0,    4,2,2,0,    5,4,6,0,
-                                2,5,0,0,    0,4,6,0,    2,4,0,0,    0,4,7,0,
-                                
-                                0,6,0,0,    3,3,3,0,    2,0,2,0,    4,4,4,0,
-                                2,6,0,0,    4,4,4,0,    2,5,2,0,    0,5,0,0,
-                                2,6,2,0,    3,3,3,0,    2,2,2,0,    4,4,4,0,
-                                2,5,0,0,    4,4,4,0,    2,4,2,0,    4,4,4,0,
-                                
-                                2,6,0,0,    3,3,5,0,    2,2,2,0,    4,4,6,0,
-                                2,5,0,0,    0,4,6,0,    2,4,0,0,    0,4,7,0,
-                                2,6,0,0,    3,3,5,0,    2,2,2,0,    4,4,6,0,
-                                2,5,0,0,    0,4,6,0,    2,4,0,0,    0,4,7,0,    };
+    fetch_target_value(cpu,ir);
+    cpu_write(cpu, cpu->abs_addr, cpu->fetched_value-1);
+    uint8_t cmp_result = cpu->acc - (cpu->fetched_value-1);
 
-char *opcode_str_matrix[] = {       "BRK","ORA","UDF","UDF",    "UDF","ORA","ASL","UDF",    "PHP","ORA","ASL","UDF",    "UDF","ORA","ASL","UDF",
-                                    "BPL","ORA","UDF","UDF",    "UDF","ORA","ASL","UDF",    "CLC","ORA","UDF","UDF",    "UDF","ORA","ASL","UDF",
-                                    "JSR","AND","UDF","UDF",    "BIT","AND","ROL","UDF",    "PLP","AND","ROL","UDF",    "BIT","AND","ROL","UDF",
-                                    "BMI","AND","UDF","UDF",    "UDF","AND","ROL","UDF",    "SEC","AND","UDF","UDF",    "UDF","AND","ROL","UDF",
-                                    
-                                    "RTI","EOR","UDF","UDF",    "UDF","EOR","LSR","UDF",    "PHA","EOR","LSR","UDF",    "JMP","EOR","LSR","UDF",
-                                    "BVC","EOR","UDF","UDF",    "UDF","EOR","LSR","UDF",    "CLI","EOR","UDF","UDF",    "UDF","EOR","LSR","UDF",
-                                    "RTS","ADC","UDF","UDF",    "UDF","ADC","ROR","UDF",    "PLA","ADC","ROR","UDF",    "JMP","ADC","ROR","UDF",
-                                    "BVS","ADC","UDF","UDF",    "UDF","ADC","ROR","UDF",    "SEI","ADC","UDF","UDF",    "UDF","ADC","ROR","UDF",
-                                    
-                                    "UDF","STA","UDF","UDF",    "STY","STA","STX","UDF",    "DEY","UDF","TXA","UDF",    "STY","STA","STX","UDF",
-                                    "BCC","STA","UDF","UDF",    "STY","STA","STX","UDF",    "TYA","STA","TXS","UDF",    "UDF","STA","UDF","UDF",
-                                    "LDY","LDA","LDX","UDF",    "LDY","LDA","LDX","UDF",    "TAY","LDA","TAX","UDF",    "LDY","LDA","LDX","UDF",
-                                    "BCS","LDA","UDF","UDF",    "LDY","LDA","LDX","UDF",    "CLV","LDA","TSX","UDF",    "LDY","LDA","LDX","UDF",
-                                    
-                                    "CPY","CMP","UDF","UDF",    "CPY","CMP","DEC","UDF",    "INY","CMP","DEX","UDF",    "CPY","CMP","DEC","UDF",
-                                    "BNE","CMP","UDF","UDF",    "UDF","CMP","DEC","UDF",    "CLD","CMP","UDF","UDF",    "UDF","CMP","DEC","UDF",
-                                    "CPX","SBC","UDF","UDF",    "CPX","SBC","INC","UDF",    "INX","SBC","NOP","UDF",    "CPX","SBC","INC","UDF",
-                                    "BEQ","SBC","UDF","UDF",    "UDF","SBC","INC","UDF",    "SED","SBC","UDF","UDF",    "UDF","SBC","INC","UDF",    };
+    setFlag('N', cmp_result & 0x80, cpu);
+    setFlag('Z', cmp_result==0 ? 1 : 0, cpu);
+    setFlag('C', (cpu->acc >= (cpu->fetched_value-1)) ? 1 : 0, cpu);
+
+    if(debug) {
+        fprintf(stderr, "M: %02X, A: %02X, cmp: %02X, N: %d, Z: %d, C: %d\n", cpu_read(cpu, cpu->abs_addr), cpu->acc, cmp_result, getFlag('N', cpu), getFlag('Z', cpu), getFlag('C', cpu));
+    }
+
+}
+void I_ISC(Processor *cpu, InstrInfo *ir) {
+    fetch_target_value(cpu,ir);
+    cpu_write(cpu, cpu->abs_addr, cpu->fetched_value+1);
+
+
+    uint16_t value_inv = ((uint16_t)cpu->fetched_value+1) ^ 0x00FF;
+
+    uint16_t result = (uint16_t) cpu->acc + value_inv + (uint16_t) getFlag('C', cpu);
+    setFlag('C', result > 255, cpu);
+    setFlag('Z', (result & 0x00FF) == 0, cpu);
+    setFlag('N', result & 0x80, cpu);
+    setFlag('V', ( ( result ^ (uint16_t)cpu->acc ) & ( ( result ^ (uint16_t)value_inv ) ) & 0x0080), cpu);
+    cpu->acc = (uint8_t) (result & 0x00FF);
+}
+void I_LAS(Processor *cpu, InstrInfo *ir) {
+    fetch_target_value(cpu,ir);
+
+    uint8_t result = cpu->fetched_value & cpu->sp;
+    cpu->acc = result;
+    cpu->x_reg = result;
+    cpu->y_reg = result;
+
+    setFlag('N', result & 0x80, cpu);
+    setFlag('N', result == 0, cpu);
+}
+void I_LAX(Processor *cpu, InstrInfo *ir) {
+    fetch_target_value(cpu,ir);
+
+    cpu->acc = cpu->fetched_value;
+    cpu->x_reg = cpu->fetched_value;
+
+    setFlag('N', cpu->fetched_value & 0x80, cpu);
+    setFlag('Z', cpu->fetched_value == 0, cpu);
+}
+void I_LXA(Processor *cpu, InstrInfo *ir) { ir; } //unstable, do no implement
+void I_RLA(Processor *cpu, InstrInfo *ir) {
+    fetch_target_value(cpu, ir);
+
+    uint8_t carry_flag_value = cpu->fetched_value & 0x80; //carry flag value is the bit that is getting shifted out
+    uint8_t new_value = (cpu->fetched_value << 1) | getFlag('C', cpu); //shift left and insert old carry value
+    if (ir->addr_mode == ACC) {cpu->acc = new_value;} else {cpu_write(cpu, cpu->abs_addr, new_value);}   
+
+    cpu->acc = cpu->acc & new_value;
+
+    setFlag('N', cpu->acc & 0x80, cpu);
+    setFlag('Z', cpu->acc == 0, cpu);
+    setFlag('C', carry_flag_value, cpu);    //set shifted out bit as new carry
+}
+void I_RRA(Processor *cpu, InstrInfo *ir) {
+    fetch_target_value(cpu, ir);
+    uint8_t new_value = (cpu->fetched_value >> 1) | ((getFlag('C',cpu)) << 7); //shift right and insert bit zero on left
+    if (ir->addr_mode == ACC) {cpu->acc = new_value;} else {cpu_write(cpu, cpu->abs_addr, new_value);}   
+
+    uint16_t result = (uint16_t) cpu->acc + (uint16_t) new_value + (uint16_t) getFlag('C', cpu);
+    
+    setFlag('C', result > 255, cpu);
+    setFlag('Z', (result & 0x00FF) == 0, cpu);
+    setFlag('N', result & 0x80, cpu);
+    setFlag('V', ( ( (uint16_t)cpu->acc ^ (uint16_t)result ) & ~( (uint16_t)cpu->acc ^ (uint16_t)cpu->fetched_value ) ) & 0x0080, cpu);
+    cpu->acc = (uint8_t) (result & 0x00FF);
+}
+void I_SAX(Processor *cpu, InstrInfo *ir) {
+    fetch_target_value(cpu,ir);
+    cpu_write(cpu, cpu->abs_addr, cpu->acc & cpu->x_reg);
+}
+void I_SBX(Processor *cpu, InstrInfo *ir) { ir; }
+void I_SHA(Processor *cpu, InstrInfo *ir) { ir; }
+void I_SHX(Processor *cpu, InstrInfo *ir) { ir; }
+void I_SHY(Processor *cpu, InstrInfo *ir) { ir; }
+void I_SLO(Processor *cpu, InstrInfo *ir) {
+    fetch_target_value(cpu, ir);
+
+    uint8_t carry_flag_value = cpu->fetched_value & 0x80; //carry flag value is the bit that is getting shifted out
+    uint8_t new_value = cpu->fetched_value << 1;
+    
+    if(ir->addr_mode == ACC) {cpu->acc = new_value;} else {cpu_write(cpu, cpu->abs_addr, new_value);}   //TODO: fix the abs_addr writing somehow
+
+    cpu->acc = cpu->acc | new_value;
+
+    setFlag('N', cpu->acc & 0x80, cpu);
+    setFlag('Z', cpu->acc == 0, cpu);
+    setFlag('C', carry_flag_value, cpu);
+}
+void I_SRE(Processor *cpu, InstrInfo *ir) {
+    fetch_target_value(cpu, ir);
+    uint8_t carry_flag_value = cpu->fetched_value & 0x01; //carry flag value is the bit that is getting shifted out
+    uint8_t new_value = cpu->fetched_value >> 1;
+    if (ir->addr_mode == ACC) {cpu->acc = new_value;} else {cpu_write(cpu, cpu->abs_addr, new_value);}   
+
+    cpu->acc = cpu->acc ^ new_value;
+
+    setFlag('N', cpu->acc & 0x80, cpu);
+    setFlag('Z', cpu->acc == 0, cpu);
+    setFlag('C', carry_flag_value, cpu);
+}
+void I_TAS(Processor *cpu, InstrInfo *ir) { ir; }
+void I_JAM(Processor *cpu, InstrInfo *ir) { ir; }
+void I_USB(Processor *cpu, InstrInfo *ir) {
+    fetch_target_value(cpu, ir);
+
+    uint16_t value_inv = ((uint16_t)cpu->fetched_value) ^ 0x00FF;
+
+    uint16_t result = (uint16_t) cpu->acc + value_inv + (uint16_t) getFlag('C', cpu);
+    setFlag('C', result > 255, cpu);
+    setFlag('Z', (result & 0x00FF) == 0, cpu);
+    setFlag('N', result & 0x80, cpu);
+    setFlag('V', ( ( result ^ (uint16_t)cpu->acc ) & ( ( result ^ (uint16_t)value_inv ) ) & 0x0080), cpu);
+    cpu->acc = (uint8_t) (result & 0x00FF);
+}
+
+opcode opcode_matrix[] = {
+                            I_BRK,	I_ORA,	I_JAM,	I_SLO,	I_NOP,	I_ORA,	I_ASL,	I_SLO,	I_PHP,	I_ORA,	I_ASL,	I_ANC,	I_NOP,	I_ORA,	I_ASL,	I_SLO,
+                            I_BPL,	I_ORA,	I_JAM,	I_SLO,	I_NOP,	I_ORA,	I_ASL,	I_SLO,	I_CLC,	I_ORA,	I_NOP,	I_SLO,	I_NOP,	I_ORA,	I_ASL,	I_SLO,
+                            I_JSR,	I_AND,	I_JAM,	I_RLA,	I_BIT,	I_AND,	I_ROL,	I_RLA,	I_PLP,	I_AND,	I_ROL,	I_ANC,	I_BIT,	I_AND,	I_ROL,	I_RLA,
+                            I_BMI,	I_AND,	I_JAM,	I_RLA,	I_NOP,	I_AND,	I_ROL,	I_RLA,	I_SEC,	I_AND,	I_NOP,	I_RLA,	I_NOP,	I_AND,	I_ROL,	I_RLA,
+                            I_RTI,	I_EOR,	I_JAM,	I_SRE,	I_NOP,	I_EOR,	I_LSR,	I_SRE,	I_PHA,	I_EOR,	I_LSR,	I_ALR,	I_JMP,	I_EOR,	I_LSR,	I_SRE,
+                            I_BVC,	I_EOR,	I_JAM,	I_SRE,	I_NOP,	I_EOR,	I_LSR,	I_SRE,	I_CLI,	I_EOR,	I_NOP,	I_SRE,	I_NOP,	I_EOR,	I_LSR,	I_SRE,
+                            I_RTS,	I_ADC,	I_JAM,	I_RRA,	I_NOP,	I_ADC,	I_ROR,	I_RRA,	I_PLA,	I_ADC,	I_ROR,	I_ARR,	I_JMP,	I_ADC,	I_ROR,	I_RRA,
+                            I_BVS,	I_ADC,	I_JAM,	I_RRA,	I_NOP,	I_ADC,	I_ROR,	I_RRA,	I_SEI,	I_ADC,	I_NOP,	I_RRA,	I_NOP,	I_ADC,	I_ROR,	I_RRA,
+                            I_NOP,	I_STA,	I_NOP,	I_SAX,	I_STY,	I_STA,	I_STX,	I_SAX,	I_DEY,	I_NOP,	I_TXA,	I_ANE,	I_STY,	I_STA,	I_STX,	I_SAX,
+                            I_BCC,	I_STA,	I_JAM,	I_SHA,	I_STY,	I_STA,	I_STX,	I_SAX,	I_TYA,	I_STA,	I_TXS,	I_TAS,	I_SHY,	I_STA,	I_SHX,	I_SHA,
+                            I_LDY,	I_LDA,	I_LDX,	I_LAX,	I_LDY,	I_LDA,	I_LDX,	I_LAX,	I_TAY,	I_LDA,	I_TAX,	I_LXA,	I_LDY,	I_LDA,	I_LDX,	I_LAX,
+                            I_BCS,	I_LDA,	I_JAM,	I_LAX,	I_LDY,	I_LDA,	I_LDX,	I_LAX,	I_CLV,	I_LDA,	I_TSX,	I_LAS,	I_LDY,	I_LDA,	I_LDX,	I_LAX,
+                            I_CPY,	I_CMP,	I_NOP,	I_DCP,	I_CPY,	I_CMP,	I_DEC,	I_DCP,	I_INY,	I_CMP,	I_DEX,	I_SBX,	I_CPY,	I_CMP,	I_DEC,	I_DCP,
+                            I_BNE,	I_CMP,	I_JAM,	I_DCP,	I_NOP,	I_CMP,	I_DEC,	I_DCP,	I_CLD,	I_CMP,	I_NOP,	I_DCP,	I_NOP,	I_CMP,	I_DEC,	I_DCP,
+                            I_CPX,	I_SBC,	I_NOP,	I_ISC,	I_CPX,	I_SBC,	I_INC,	I_ISC,	I_INX,	I_SBC,	I_NOP,	I_USB,	I_CPX,	I_SBC,	I_INC,	I_ISC,
+                            I_BEQ,	I_SBC,	I_JAM,	I_ISC,	I_NOP,	I_SBC,	I_INC,	I_ISC,	I_SED,	I_SBC,	I_NOP,	I_ISC,	I_NOP,	I_SBC,	I_INC,	I_ISC,
+};                      
+
+address_mode address_mode_matrix[] = {
+                                        IMP,	IDX,	UDF,	IDX,	ZPG,	ZPG,	ZPG,	ZPG,	IMP,	IMM,	ACC,	IMM,	ABS,	ABS,	ABS,	ABS,
+                                        REL,	IDY,	UDF,	IDY,	ZPX,	ZPX,	ZPX,	ZPX,	IMP,	ABY,	IMP,	ABY,	ABX,	ABX,	ABX,	ABX,
+                                        ABS,	IDX,	UDF,	IDX,	ZPG,	ZPG,	ZPG,	ZPG,	IMP,	IMM,	ACC,	IMM,	ABS,	ABS,	ABS,	ABS,
+                                        REL,	IDY,	UDF,	IDY,	ZPX,	ZPX,	ZPX,	ZPX,	IMP,	ABY,	IMP,	ABY,	ABX,	ABX,	ABX,	ABX,
+                                        IMP,	IDX,	UDF,	IDX,	ZPG,	ZPG,	ZPG,	ZPG,	IMP,	IMM,	ACC,	IMM,	ABS,	ABS,	ABS,	ABS,
+                                        REL,	IDY,	UDF,	IDY,	ZPX,	ZPX,	ZPX,	ZPX,	IMP,	ABY,	IMP,	ABY,	ABX,	ABX,	ABX,	ABX,
+                                        IMP,	IDX,	UDF,	IDX,	ZPG,	ZPG,	ZPG,	ZPG,	IMP,	IMM,	ACC,	IMM,	IND,	ABS,	ABS,	ABS,
+                                        REL,	IDY,	UDF,	IDY,	ZPX,	ZPX,	ZPX,	ZPX,	IMP,	ABY,	IMP,	ABY,	ABX,	ABX,	ABX,	ABX,
+                                        IMM,	IDX,	IMM,	IDX,	ZPG,	ZPG,	ZPG,	ZPG,	IMP,	IMM,	IMP,	IMM,	ABS,	ABS,	ABS,	ABS,
+                                        REL,	IDY,	UDF,	IDY,	ZPX,	ZPX,	ZPY,	ZPY,	IMP,	ABY,	IMP,	ABY,	ABX,	ABX,	ABY,	ABY,
+                                        IMM,	IDX,	IMM,	IDX,	ZPG,	ZPG,	ZPG,	ZPG,	IMP,	IMM,	IMP,	IMM,	ABS,	ABS,	ABS,	ABS,
+                                        REL,	IDY,	UDF,	IDY,	ZPX,	ZPX,	ZPY,	ZPY,	IMP,	ABY,	IMP,	ABY,	ABX,	ABX,	ABY,	ABY,
+                                        IMM,	IDX,	IMM,	IDX,	ZPG,	ZPG,	ZPG,	ZPG,	IMP,	IMM,	IMP,	IMM,	ABS,	ABS,	ABS,	ABS,
+                                        REL,	IDY,	UDF,	IDY,	ZPX,	ZPX,	ZPX,	ZPX,	IMP,	ABY,	IMP,	ABY,	ABX,	ABX,	ABX,	ABX,
+                                        IMM,	IDX,	IMM,	IDX,	ZPG,	ZPG,	ZPG,	ZPG,	IMP,	IMM,	IMP,	IMM,	ABS,	ABS,	ABS,	ABS,
+                                        REL,	IDY,	UDF,	IDY,	ZPX,	ZPX,	ZPX,	ZPX,	IMP,	ABY,	IMP,	ABY,	ABX,	ABX,	ABX,	ABX,
+};
+
+unsigned int byte_matrix[] = {1,2,0,2,2,2,2,2,1,2,1,2,3,3,3,3,2,2,0,2,2,2,2,2,1,3,1,3,3,3,3,3,3,2,0,2,2,2,2,2,1,2,1,2,3,3,3,3,2,2,0,2,2,2,2,2,1,3,1,3,3,3,3,3,1,2,0,2,2,2,2,2,1,2,1,2,3,3,3,3,2,2,0,2,2,2,2,2,1,3,1,3,3,3,3,3,1,2,0,2,2,2,2,2,1,2,1,2,3,3,3,3,2,2,0,2,2,2,2,2,1,3,1,3,3,3,3,3,2,2,2,2,2,2,2,2,1,2,1,2,3,3,3,3,2,2,0,2,2,2,2,2,1,3,1,3,3,3,3,3,2,2,2,2,2,2,2,2,1,2,1,2,3,3,3,3,2,2,0,2,2,2,2,2,1,3,1,3,3,3,3,3,2,2,2,2,2,2,2,2,1,2,1,2,3,3,3,3,2,2,0,2,2,2,2,2,1,3,1,3,3,3,3,3,2,2,2,2,2,2,2,2,1,2,1,2,3,3,3,3,2,2,0,2,2,2,2,2,1,3,1,3,3,3,3,3,};
+
+unsigned int cycle_matrix[] = {7,6,0,8,3,3,5,5,3,2,2,2,4,4,6,6,2,5,0,8,4,4,6,6,2,4,2,7,4,4,7,7,6,6,0,8,3,3,5,5,4,2,2,2,4,4,6,6,2,5,0,8,4,4,6,6,2,4,2,7,4,4,7,7,6,6,0,8,3,3,5,5,3,2,2,2,3,4,6,6,2,5,0,8,4,4,6,6,2,4,2,7,4,4,7,7,6,6,0,8,3,3,5,5,4,2,2,2,5,4,6,6,2,5,0,8,4,4,6,6,2,4,2,7,4,4,7,7,2,6,2,6,3,3,3,3,2,2,2,2,4,4,4,4,2,6,0,6,4,4,4,4,2,5,2,5,5,5,5,5,2,6,2,6,3,3,3,3,2,2,2,2,4,4,4,4,2,5,0,5,4,4,4,4,2,4,2,4,4,4,4,4,2,6,2,8,3,3,5,5,2,2,2,2,4,4,6,6,2,5,0,8,4,4,6,6,2,4,2,7,4,4,7,7,2,6,2,8,3,3,5,5,2,2,2,2,4,4,6,6,2,5,0,8,4,4,6,6,2,4,2,7,4,4,7,7,};
+
+char *opcode_str_matrix[] = {       
+                                "BRK",	"ORA",	"JAM",	"SLO",	"NOP",	"ORA",	"ASL",	"SLO",	"PHP",	"ORA",	"ASL",	"ANC",	"NOP",	"ORA",	"ASL",	"SLO",
+                                "BPL",	"ORA",	"JAM",	"SLO",	"NOP",	"ORA",	"ASL",	"SLO",	"CLC",	"ORA",	"NOP",	"SLO",	"NOP",	"ORA",	"ASL",	"SLO",
+                                "JSR",	"AND",	"JAM",	"RLA",	"BIT",	"AND",	"ROL",	"RLA",	"PLP",	"AND",	"ROL",	"ANC",	"BIT",	"AND",	"ROL",	"RLA",
+                                "BMI",	"AND",	"JAM",	"RLA",	"NOP",	"AND",	"ROL",	"RLA",	"SEC",	"AND",	"NOP",	"RLA",	"NOP",	"AND",	"ROL",	"RLA",
+                                "RTI",	"EOR",	"JAM",	"SRE",	"NOP",	"EOR",	"LSR",	"SRE",	"PHA",	"EOR",	"LSR",	"ALR",	"JMP",	"EOR",	"LSR",	"SRE",
+                                "BVC",	"EOR",	"JAM",	"SRE",	"NOP",	"EOR",	"LSR",	"SRE",	"CLI",	"EOR",	"NOP",	"SRE",	"NOP",	"EOR",	"LSR",	"SRE",
+                                "RTS",	"ADC",	"JAM",	"RRA",	"NOP",	"ADC",	"ROR",	"RRA",	"PLA",	"ADC",	"ROR",	"ARR",	"JMP",	"ADC",	"ROR",	"RRA",
+                                "BVS",	"ADC",	"JAM",	"RRA",	"NOP",	"ADC",	"ROR",	"RRA",	"SEI",	"ADC",	"NOP",	"RRA",	"NOP",	"ADC",	"ROR",	"RRA",
+                                "NOP",	"STA",	"NOP",	"SAX",	"STY",	"STA",	"STX",	"SAX",	"DEY",	"NOP",	"TXA",	"ANE",	"STY",	"STA",	"STX",	"SAX",
+                                "BCC",	"STA",	"JAM",	"SHA",	"STY",	"STA",	"STX",	"SAX",	"TYA",	"STA",	"TXS",	"TAS",	"SHY",	"STA",	"SHX",	"SHA",
+                                "LDY",	"LDA",	"LDX",	"LAX",	"LDY",	"LDA",	"LDX",	"LAX",	"TAY",	"LDA",	"TAX",	"LXA",	"LDY",	"LDA",	"LDX",	"LAX",
+                                "BCS",	"LDA",	"JAM",	"LAX",	"LDY",	"LDA",	"LDX",	"LAX",	"CLV",	"LDA",	"TSX",	"LAS",	"LDY",	"LDA",	"LDX",	"LAX",
+                                "CPY",	"CMP",	"NOP",	"DCP",	"CPY",	"CMP",	"DEC",	"DCP",	"INY",	"CMP",	"DEX",	"SBX",	"CPY",	"CMP",	"DEC",	"DCP",
+                                "BNE",	"CMP",	"JAM",	"DCP",	"NOP",	"CMP",	"DEC",	"DCP",	"CLD",	"CMP",	"NOP",	"DCP",	"NOP",	"CMP",	"DEC",	"DCP",
+                                "CPX",	"SBC",	"NOP",	"ISC",	"CPX",	"SBC",	"INC",	"ISC",	"INX",	"SBC",	"NOP",	"USB",	"CPX",	"SBC",	"INC",	"ISC",
+                                "BEQ",	"SBC",	"JAM",	"ISC",	"NOP",	"SBC",	"INC",	"ISC",	"SED",	"SBC",	"NOP",	"ISC",	"NOP",	"SBC",	"INC",	"ISC",
+};
 
 //TODO: design proper decoding
 InstrInfo decode_instruction(uint8_t byte) {
