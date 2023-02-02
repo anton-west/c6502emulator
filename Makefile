@@ -24,7 +24,7 @@ TESTS:=$(filter-out src/display.c, $(TESTS))
 all: $(BIN)
 
 run: $(BIN)
-	$(BINDIR)/c6502
+	./$(BINDIR)/c6502 -f multiply.txt
 
 
 release: cleanrelease
