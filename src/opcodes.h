@@ -7,7 +7,8 @@ typedef void (*opcode) (Processor *cpu, InstrInfo *ir);
 
 //set the internal helper values abs_addr and fetched_value of a cpu
 //pass InstrInfo to record information of instruction execution
-void fetch_target_value(Processor *cpu, InstrInfo *ir);
+//returns either 0 or 1 depending on if extra cycle needs to be added to cycle count
+int fetch_target_value(Processor *cpu, InstrInfo *ir);
 
 //convert byte to corresping opcode, returned InstrInfo will contain
 //function, addressmode, instruction byte size, and cycle count of the corresponding instruction

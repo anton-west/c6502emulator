@@ -32,7 +32,10 @@ void decode_instructions(Ir **ir_arr, size_t n_ir, uint8_t* mem) {
 
 
 
-void fetch_target_value(Processor *cpu, InstrInfo *ir) {
+int fetch_target_value(Processor *cpu, InstrInfo *ir) {
+
+    int extra_cycle = 0;
+
     switch (ir->addr_mode)
     {
     case IMP:
@@ -63,9 +66,10 @@ void fetch_target_value(Processor *cpu, InstrInfo *ir) {
 		        offset |= 0xFF00;
             }
             uint16_t trg_addr = cpu->pc + offset + 2;
-            if((trg_addr & 0xFF00) != (cpu->pc & 0xFF00)) {
-                ir->n_cycles++;
+            if((trg_addr & 0xFF00) != ((cpu->pc + 2)& 0xFF00)) {
+                extra_cycle = 1;  //page boundary crossed, add 1
             }
+
             cpu->abs_addr = trg_addr;
             cpu->fetched_value = cpu_read(cpu, cpu->abs_addr);
             break;
@@ -118,7 +122,7 @@ void fetch_target_value(Processor *cpu, InstrInfo *ir) {
             uint16_t temp = addr_low | (addr_high << 8);
             uint16_t trg_addr = temp + cpu->x_reg;
             if ((trg_addr & 0xFF00) != (temp & 0xFF00)) {
-                ir->n_cycles += 1;    //extra cycle
+                extra_cycle = 1;    //extra cycle
             }
             cpu->pc += 3;
             cpu->abs_addr =  trg_addr;
@@ -133,7 +137,7 @@ void fetch_target_value(Processor *cpu, InstrInfo *ir) {
             uint16_t temp = addr_low | (addr_high << 8);
             uint16_t trg_addr = temp + cpu->y_reg;
             if ((trg_addr & 0xFF00) != (temp & 0xFF00)) {
-                ir->n_cycles += 1;    //extra cycle
+                extra_cycle = 1;    //extra cycle
             }
             cpu->pc += 3;
             cpu->abs_addr =  trg_addr;
@@ -177,7 +181,7 @@ void fetch_target_value(Processor *cpu, InstrInfo *ir) {
             uint16_t temp = addr_low + (addr_high << 8);
             uint16_t trg_addr = temp + cpu->y_reg;
             if ((trg_addr & 0xFF00) != (temp & 0xFF00)) {
-                ir->n_cycles += 1;    //extra cycle
+                extra_cycle = 1;    //extra cycle
             }
             cpu->pc += 2;
             cpu->abs_addr = trg_addr;
@@ -188,13 +192,14 @@ void fetch_target_value(Processor *cpu, InstrInfo *ir) {
     default:
         break;
     }
+    return extra_cycle;
 }
 
 
 void I_ADC(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "ADC");
-   
-    fetch_target_value(cpu, ir);
+    
+    ir->n_cycles += fetch_target_value(cpu, ir);
     uint16_t result = (uint16_t) cpu->acc + (uint16_t) cpu->fetched_value + (uint16_t) getFlag('C', cpu);
     
     setFlag('C', result > 255, cpu);
@@ -206,7 +211,7 @@ void I_ADC(Processor *cpu, InstrInfo *ir) {
 void I_AND(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "AND");
     
-    fetch_target_value(cpu, ir);
+    ir->n_cycles += fetch_target_value(cpu, ir);
     uint8_t and_comparison = cpu->fetched_value & cpu->acc;
     cpu->acc = and_comparison;
     setFlag('N', and_comparison & 0x80, cpu);
@@ -215,7 +220,7 @@ void I_AND(Processor *cpu, InstrInfo *ir) {
 void I_ASL(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "ASL");  
 
-    fetch_target_value(cpu, ir);
+    ir->n_cycles += fetch_target_value(cpu, ir);
     uint8_t carry_flag_value = cpu->fetched_value & 0x80; //carry flag value is the bit that is getting shifted out
     uint8_t new_value = cpu->fetched_value << 1;if
     
@@ -228,8 +233,9 @@ void I_ASL(Processor *cpu, InstrInfo *ir) {
 void I_BCC(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "BCC");
     
-    fetch_target_value(cpu, ir);
+    int extra_cycle = fetch_target_value(cpu, ir);
     if (getFlag('C', cpu) == 0) {
+        ir->n_cycles += 1 + extra_cycle;
         cpu->pc = cpu->abs_addr;
     } else {
         cpu->pc += 2;
@@ -237,8 +243,9 @@ void I_BCC(Processor *cpu, InstrInfo *ir) {
 }
 void I_BCS(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "BCS");
-    fetch_target_value(cpu, ir);
+    int extra_cycle = fetch_target_value(cpu, ir);
     if (getFlag('C', cpu) == 1) {
+        ir->n_cycles += 1 + extra_cycle; //if carry set and branch occours, add extra cycle
         cpu->pc = cpu->abs_addr;
     } else {
         cpu->pc += 2;
@@ -246,8 +253,9 @@ void I_BCS(Processor *cpu, InstrInfo *ir) {
 }
 void I_BEQ(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "BEQ");
-    fetch_target_value(cpu, ir);
+    int extra_cycle = fetch_target_value(cpu, ir);
     if (getFlag('Z', cpu) == 1) {
+        ir->n_cycles += 1 + extra_cycle;
         cpu->pc = cpu->abs_addr;
     } else {
         cpu->pc += 2;
@@ -256,7 +264,7 @@ void I_BEQ(Processor *cpu, InstrInfo *ir) {
 void I_BIT(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "BIT");
     
-    fetch_target_value(cpu, ir);
+    ir->n_cycles += fetch_target_value(cpu, ir);
 
     uint8_t result = cpu->acc & cpu->fetched_value;
     setFlag('N', cpu->fetched_value & 0x80, cpu);
@@ -265,8 +273,9 @@ void I_BIT(Processor *cpu, InstrInfo *ir) {
 }
 void I_BMI(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "BMI");
-    fetch_target_value(cpu, ir);
+    int extra_cycle = fetch_target_value(cpu, ir);
     if (getFlag('N', cpu) == 1) {
+        ir->n_cycles += 1 + extra_cycle;
         cpu->pc = cpu->abs_addr;
     } else {
         cpu->pc += 2;
@@ -274,8 +283,9 @@ void I_BMI(Processor *cpu, InstrInfo *ir) {
 }
 void I_BNE(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "BNE");
-    fetch_target_value(cpu, ir);
+    int extra_cycle = fetch_target_value(cpu, ir);
     if (getFlag('Z', cpu) == 0) {
+        ir->n_cycles += 1 + extra_cycle;
         cpu->pc = cpu->abs_addr;     
     } else {
         cpu->pc += 2;
@@ -284,8 +294,9 @@ void I_BNE(Processor *cpu, InstrInfo *ir) {
 void I_BPL(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "BPL");
 
-    fetch_target_value(cpu, ir);
+    int extra_cycle = fetch_target_value(cpu, ir);
     if (getFlag('N', cpu) == 0) {
+        ir->n_cycles += 1 + extra_cycle;
         cpu->pc = cpu->abs_addr;
     } else {
         cpu->pc += 2;
@@ -310,17 +321,19 @@ void I_BRK(Processor *cpu, InstrInfo *ir) {
 }
 void I_BVC(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "BVC");
-    fetch_target_value(cpu, ir);
+    int extra_cycle = fetch_target_value(cpu, ir);
     if (getFlag('V', cpu) == 0) {
+        ir->n_cycles += 1 + extra_cycle;
         cpu->pc = cpu->abs_addr;
     } else {
         cpu->pc += 2;
     }
 }
 void I_BVS(Processor *cpu, InstrInfo *ir) {
-    strcpy(ir->opcode_mnemonic, "BVC");
-    fetch_target_value(cpu, ir);
+    strcpy(ir->opcode_mnemonic, "BVS");
+    int extra_cycle = fetch_target_value(cpu, ir);
     if (getFlag('V', cpu) == 1) {
+        ir->n_cycles += 1 + extra_cycle;
         cpu->pc = cpu->abs_addr;
     } else {
         cpu->pc += 2;
@@ -348,7 +361,7 @@ void I_CLV(Processor *cpu, InstrInfo *ir) {
 }
 void I_CMP(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "CMP");
-    fetch_target_value(cpu, ir);
+    ir->n_cycles += fetch_target_value(cpu, ir);
     uint8_t cmp_result = cpu->acc - cpu->fetched_value;
 
     setFlag('N', cmp_result & 0x80, cpu);
@@ -357,7 +370,7 @@ void I_CMP(Processor *cpu, InstrInfo *ir) {
 }
 void I_CPX(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "CPX");
-    fetch_target_value(cpu, ir);
+    ir->n_cycles += fetch_target_value(cpu, ir);
     uint8_t cmp_result = cpu->x_reg - cpu->fetched_value;
     setFlag('N', cmp_result & 0x80, cpu);
     setFlag('Z', (cpu->x_reg == cpu->fetched_value) ? 1 : 0, cpu);
@@ -365,7 +378,7 @@ void I_CPX(Processor *cpu, InstrInfo *ir) {
 }
 void I_CPY(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "CPY");
-    fetch_target_value(cpu, ir);
+    ir->n_cycles += fetch_target_value(cpu, ir);
     uint8_t cmp_result = cpu->y_reg - cpu->fetched_value;
     setFlag('N', cmp_result & 0x80, cpu);
     setFlag('Z', (cpu->y_reg == cpu->fetched_value) ? 1 : 0, cpu);
@@ -374,7 +387,7 @@ void I_CPY(Processor *cpu, InstrInfo *ir) {
 void I_DEC(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "DEC");
 
-    fetch_target_value(cpu, ir);
+    ir->n_cycles += fetch_target_value(cpu, ir);
     uint8_t new_value = cpu->fetched_value - 1;
     cpu_write(cpu, cpu->abs_addr, new_value);
     setFlag('N', new_value & 0x80, cpu);
@@ -396,7 +409,7 @@ void I_DEY(Processor *cpu, InstrInfo *ir) {
 }
 void I_EOR(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "EOR");
-    fetch_target_value(cpu, ir);
+    ir->n_cycles += fetch_target_value(cpu, ir);
     uint8_t and_comparison = cpu->fetched_value ^ cpu->acc;
     cpu->acc = and_comparison;
     setFlag('N', and_comparison & 0x80, cpu);
@@ -404,7 +417,7 @@ void I_EOR(Processor *cpu, InstrInfo *ir) {
 }
 void I_INC(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "INC");
-    fetch_target_value(cpu, ir);
+    ir->n_cycles += fetch_target_value(cpu, ir);
     uint8_t new_value = cpu->fetched_value + 1;
     cpu_write(cpu, cpu->abs_addr, new_value);
     setFlag('N', new_value & 0x80, cpu);
@@ -426,7 +439,7 @@ void I_INY(Processor *cpu, InstrInfo *ir) {
 }
 void I_JMP(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "JMP");
-    fetch_target_value(cpu, ir);
+    ir->n_cycles += fetch_target_value(cpu, ir);
     cpu->pc=cpu->abs_addr;
 }
 void I_JSR(Processor *cpu, InstrInfo *ir) {
@@ -438,26 +451,26 @@ void I_JSR(Processor *cpu, InstrInfo *ir) {
     cpu->sp--;
     cpu_write(cpu, 0x0100 | cpu->sp, (cpu->pc + 2) & 0x00FF );
     cpu->sp--;
-    fetch_target_value(cpu, ir);
+    ir->n_cycles += fetch_target_value(cpu, ir);
     cpu->pc=cpu->abs_addr;;
 }
 void I_LDA(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "LDA");  
-    fetch_target_value(cpu, ir);
+    ir->n_cycles += fetch_target_value(cpu, ir);
     cpu->acc = cpu->fetched_value;
     setFlag('N', cpu->fetched_value & 0x80, cpu);
     setFlag('Z', cpu->fetched_value == 0, cpu);
 }
 void I_LDX(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "LDX");  
-    fetch_target_value(cpu, ir);
+    ir->n_cycles += fetch_target_value(cpu, ir);
     cpu->x_reg = cpu->fetched_value;
     setFlag('N', cpu->fetched_value & 0x80, cpu);
     setFlag('Z', cpu->fetched_value == 0, cpu);
 }
 void I_LDY(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "LDY");  
-    fetch_target_value(cpu, ir);
+    ir->n_cycles += fetch_target_value(cpu, ir);
     cpu->y_reg = cpu->fetched_value;
     setFlag('N', cpu->fetched_value & 0x80, cpu);
     setFlag('Z', cpu->fetched_value == 0, cpu);
@@ -465,7 +478,7 @@ void I_LDY(Processor *cpu, InstrInfo *ir) {
 void I_LSR(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "LSR");  
 
-    fetch_target_value(cpu, ir);
+    ir->n_cycles += fetch_target_value(cpu, ir);
     uint8_t carry_flag_value = cpu->fetched_value & 0x01; //carry flag value is the bit that is getting shifted out
     uint8_t new_value = cpu->fetched_value >> 1;
     if (ir->addr_mode == ACC) {cpu->acc = new_value;} else {cpu_write(cpu, cpu->abs_addr, new_value);}   
@@ -476,11 +489,12 @@ void I_LSR(Processor *cpu, InstrInfo *ir) {
 }
 void I_NOP(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "NOP");
-    cpu->pc += ir->n_bytes;
+    ir->n_cycles += fetch_target_value(cpu, ir);
+    //cpu->pc += ir->n_bytes;
 }
 void I_ORA(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "ORA");
-    fetch_target_value(cpu, ir);
+    ir->n_cycles += fetch_target_value(cpu, ir);
     uint8_t or_comparison = cpu->fetched_value | cpu->acc;
     cpu->acc = or_comparison;
     setFlag('N', or_comparison & 0x80, cpu);
@@ -517,7 +531,7 @@ void I_PLP(Processor *cpu, InstrInfo *ir) {
 }
 void I_ROL(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "ROL");  
-    fetch_target_value(cpu, ir);
+    ir->n_cycles += fetch_target_value(cpu, ir);
     uint8_t carry_flag_value = cpu->fetched_value & 0x80; //carry flag value is the bit that is getting shifted out
     uint8_t new_value = (cpu->fetched_value << 1) | getFlag('C', cpu); //shift left and insert old carry value
     if (ir->addr_mode == ACC) {cpu->acc = new_value;} else {cpu_write(cpu, cpu->abs_addr, new_value);}   
@@ -528,7 +542,7 @@ void I_ROL(Processor *cpu, InstrInfo *ir) {
 }  
 void I_ROR(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "ROR");  
-    fetch_target_value(cpu, ir);
+    ir->n_cycles += fetch_target_value(cpu, ir);
     uint8_t new_carry_flag_value = cpu->fetched_value & 0x01; //carry flag value is the bit that is getting shifted out
     uint8_t new_value = (cpu->fetched_value >> 1) | ((getFlag('C',cpu)) << 7); //shift right and insert bit zero on left
     if (ir->addr_mode == ACC) {cpu->acc = new_value;} else {cpu_write(cpu, cpu->abs_addr, new_value);}   
@@ -565,7 +579,7 @@ void I_RTS(Processor *cpu, InstrInfo *ir) {
 }
 void I_SBC(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "SBC");
-    fetch_target_value(cpu, ir);
+    ir->n_cycles += fetch_target_value(cpu, ir);
 
     uint16_t value_inv = ((uint16_t)cpu->fetched_value) ^ 0x00FF;
 
@@ -598,12 +612,12 @@ void I_STA(Processor *cpu, InstrInfo *ir) {
 }
 void I_STX(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "STX");  
-    fetch_target_value(cpu, ir);
+    ir->n_cycles += fetch_target_value(cpu, ir);
     cpu_write(cpu, cpu->abs_addr, cpu->x_reg);
 }
 void I_STY(Processor *cpu, InstrInfo *ir) {
     strcpy(ir->opcode_mnemonic, "STY");  
-    fetch_target_value(cpu, ir);
+    ir->n_cycles += fetch_target_value(cpu, ir);
     cpu_write(cpu, cpu->abs_addr, cpu->y_reg);
 }
 void I_TAX(Processor *cpu, InstrInfo *ir) {
@@ -661,7 +675,7 @@ void U_DEF(Processor *cpu, InstrInfo *ir) {
 // ILLEGAL OPCODES
 
 void I_ALR(Processor *cpu, InstrInfo *ir) {
-    fetch_target_value(cpu, ir);
+    ir->n_cycles += fetch_target_value(cpu, ir);
     uint8_t and_result = cpu->acc & cpu->fetched_value;
 
     uint8_t carry_flag_value = and_result & 0x01; //carry flag value is the bit that is getting shifted out
@@ -674,7 +688,7 @@ void I_ALR(Processor *cpu, InstrInfo *ir) {
 
 }
 void I_ANC(Processor *cpu, InstrInfo *ir) {
-    fetch_target_value(cpu, ir);
+    ir->n_cycles += fetch_target_value(cpu, ir);
     uint8_t and_result = cpu->acc & cpu->fetched_value;
     cpu->acc = and_result;
     setFlag('N', and_result & 0x80, cpu);
@@ -718,7 +732,7 @@ void I_ISC(Processor *cpu, InstrInfo *ir) {
     cpu->acc = (uint8_t) (result & 0x00FF);
 }
 void I_LAS(Processor *cpu, InstrInfo *ir) {
-    fetch_target_value(cpu,ir);
+    ir->n_cycles += fetch_target_value(cpu,ir);
 
     uint8_t result = cpu->fetched_value & cpu->sp;
     cpu->acc = result;
@@ -729,7 +743,7 @@ void I_LAS(Processor *cpu, InstrInfo *ir) {
     setFlag('N', result == 0, cpu);
 }
 void I_LAX(Processor *cpu, InstrInfo *ir) {
-    fetch_target_value(cpu,ir);
+    ir->n_cycles += fetch_target_value(cpu,ir);
 
     cpu->acc = cpu->fetched_value;
     cpu->x_reg = cpu->fetched_value;
@@ -755,17 +769,19 @@ void I_RRA(Processor *cpu, InstrInfo *ir) {
     fetch_target_value(cpu, ir);
     uint8_t new_value = (cpu->fetched_value >> 1) | ((getFlag('C',cpu)) << 7); //shift right and insert bit zero on left
     if (ir->addr_mode == ACC) {cpu->acc = new_value;} else {cpu_write(cpu, cpu->abs_addr, new_value);}   
+    setFlag('C', cpu->fetched_value & 0x01, cpu);
+
 
     uint16_t result = (uint16_t) cpu->acc + (uint16_t) new_value + (uint16_t) getFlag('C', cpu);
     
     setFlag('C', result > 255, cpu);
     setFlag('Z', (result & 0x00FF) == 0, cpu);
     setFlag('N', result & 0x80, cpu);
-    setFlag('V', ( ( (uint16_t)cpu->acc ^ (uint16_t)result ) & ~( (uint16_t)cpu->acc ^ (uint16_t)cpu->fetched_value ) ) & 0x0080, cpu);
+    setFlag('V', ( ( (uint16_t)cpu->acc ^ (uint16_t)result ) & ~( (uint16_t)cpu->acc ^ (uint16_t)new_value ) ) & 0x0080, cpu);
     cpu->acc = (uint8_t) (result & 0x00FF);
 }
 void I_SAX(Processor *cpu, InstrInfo *ir) {
-    fetch_target_value(cpu,ir);
+    ir->n_cycles += fetch_target_value(cpu,ir);
     cpu_write(cpu, cpu->abs_addr, cpu->acc & cpu->x_reg);
 }
 void I_SBX(Processor *cpu, InstrInfo *ir) { ir; }
@@ -801,7 +817,7 @@ void I_SRE(Processor *cpu, InstrInfo *ir) {
 void I_TAS(Processor *cpu, InstrInfo *ir) { ir; }
 void I_JAM(Processor *cpu, InstrInfo *ir) { ir; }
 void I_USB(Processor *cpu, InstrInfo *ir) {
-    fetch_target_value(cpu, ir);
+    ir->n_cycles += fetch_target_value(cpu, ir);
 
     uint16_t value_inv = ((uint16_t)cpu->fetched_value) ^ 0x00FF;
 
