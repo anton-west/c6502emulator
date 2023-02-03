@@ -155,19 +155,19 @@ int print_to_win_cpu(Processor *cpu) {
 int print_to_win_stack(uint8_t *stack, uint8_t stack_pointer) {
 
     int line = 8;
-    int column = 8;
+    int column = 14;
     
     uint8_t i = 0;
 
-    mvwprintw(win_stack,8,2, "SP -> ");
+    mvwprintw(win_stack,8,2, "SP $01%02X -> ", stack_pointer);
 
     while(i < 40) {
-        mvwprintw(win_stack,line,column,"  %02X", stack[(uint16_t)(0x0100 | (stack_pointer + i))]);
-        line--;
-        
         if((stack_pointer + i) == 0xFF) {
             break;
         }
+
+        mvwprintw(win_stack,line,column,"  %02X", stack[(uint16_t)(0x0100 | (stack_pointer + i))]);
+        line--;
 
         if(i % 8 == 7) {
             column += 4;
