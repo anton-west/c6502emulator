@@ -59,9 +59,11 @@ typedef struct Processor {
 
     uint8_t *memory;
 
-    unsigned int cycles; //the current instruction cycle that the cpu is on
+    unsigned int cycles; //tells cpu how many clock cycles the current instruction will take to execute
+    unsigned int total_cycles; //total amount cycles that the cpu has performed since reset/boot, used to make sure emulator is cycle accurate
+
     uint16_t abs_addr; //set this to the absolute address that the next instruction will act upon
-    uint8_t fetched_value;  //this is the value that is returned when reading the value at memory location abs_addr
+    uint8_t fetched_value;  //this is the value that is returned when reading the value at memory location abs_addr 
 
 } Processor;
 

@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
 
     char c;
     int cont = 1;
-    unsigned cycles = 0;
+    unsigned int   cycles = 0;
     while (cont && cycles < 50000) {
 
         //clear screens

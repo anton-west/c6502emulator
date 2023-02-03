@@ -30,8 +30,9 @@ void cpu_reset(Processor *cpu) {
     cpu->abs_addr = 0;
     cpu->fetched_value = 0;
     
-    //reset takes 8 cycles
-    cpu->cycles = 8;
+    //reset takes 7 cycles
+    cpu->cycles = 7;
+    cpu->total_cycles = 0;  //set total_cycles to 0, when cpu_clock is called, this will be incremented
 }
 
 //interrupt request
@@ -113,6 +114,7 @@ int cpu_clock(Processor *cpu, InstrInfo *ir) {
         *ir = ir_temp;
     }
     cpu->cycles--;
+    cpu->total_cycles++;
     return cpu->cycles;
 }
 
