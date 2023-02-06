@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
     }
 
     //decode text file into memory array
-    //hexcodes (e.g. "A9 BB 02 FF" get transformed to corresponding bytes)
+    //hexcodes (e.g. the text "A9 BB 02 FF" get transformed to corresponding bytes)
     if (!binary_mode) {
         size_t i = 0;
         int n_read = 1;

@@ -21,7 +21,7 @@ is stored in memory address $0003
 
 `c6502 -b [file]` - load program by directly reading binary, (i.e. no translation from ascii to bytevalues)
 
-`--log` - enable instruction logging to stderr, make sure to redirect sdterr to file
+`--log` - enable instruction logging to a file called log.csv
 
 The rightmost window contains the disassembly of the memory region around the program counter.
 the highlighted instruction is the current instruction that program counter is pointing to.
