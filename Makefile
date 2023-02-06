@@ -27,9 +27,9 @@ run: $(BIN)
 	./$(BINDIR)/c6502 -f multiply.txt
 
 
-release: cleanrelease
+release: clean
 release: BIN=bin/release/c6502
-release: CFLAGS=-Wall -O3 -DNDEBUG
+release: CFLAGS=-Wall -Wextra -O3 -DNDEBUG
 release: $(BIN)
 
 

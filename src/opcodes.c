@@ -1,7 +1,7 @@
 //uncomment to supress messages
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wunused-value"
-#pragma GCC diagnostic ignored "-Wreturn-type"
+//#pragma GCC diagnostic ignored "-Wunused-value"
+//#pragma GCC diagnostic ignored "-Wreturn-type"
 
 #include <stdio.h>
 #include <string.h>
@@ -696,8 +696,6 @@ void I_ANC(Processor *cpu, InstrInfo *ir) {
     setFlag('C', and_result & 0x80, cpu);
 
 }
-void I_ANE(Processor *cpu, InstrInfo *ir) { ir; } //unstable, do no implement
-void I_ARR(Processor *cpu, InstrInfo *ir) { ir; }
 void I_DCP(Processor *cpu, InstrInfo *ir) {
     int debug = 0;
     if(cpu->pc == 0xE949) {
@@ -751,7 +749,6 @@ void I_LAX(Processor *cpu, InstrInfo *ir) {
     setFlag('N', cpu->fetched_value & 0x80, cpu);
     setFlag('Z', cpu->fetched_value == 0, cpu);
 }
-void I_LXA(Processor *cpu, InstrInfo *ir) { ir; } //unstable, do no implement
 void I_RLA(Processor *cpu, InstrInfo *ir) {
     fetch_target_value(cpu, ir);
 
@@ -784,10 +781,6 @@ void I_SAX(Processor *cpu, InstrInfo *ir) {
     ir->n_cycles += fetch_target_value(cpu,ir);
     cpu_write(cpu, cpu->abs_addr, cpu->acc & cpu->x_reg);
 }
-void I_SBX(Processor *cpu, InstrInfo *ir) { ir; }
-void I_SHA(Processor *cpu, InstrInfo *ir) { ir; }
-void I_SHX(Processor *cpu, InstrInfo *ir) { ir; }
-void I_SHY(Processor *cpu, InstrInfo *ir) { ir; }
 void I_SLO(Processor *cpu, InstrInfo *ir) {
     fetch_target_value(cpu, ir);
 
@@ -814,8 +807,6 @@ void I_SRE(Processor *cpu, InstrInfo *ir) {
     setFlag('Z', cpu->acc == 0, cpu);
     setFlag('C', carry_flag_value, cpu);
 }
-void I_TAS(Processor *cpu, InstrInfo *ir) { ir; }
-void I_JAM(Processor *cpu, InstrInfo *ir) { ir; }
 void I_USB(Processor *cpu, InstrInfo *ir) {
     ir->n_cycles += fetch_target_value(cpu, ir);
 
@@ -828,6 +819,17 @@ void I_USB(Processor *cpu, InstrInfo *ir) {
     setFlag('V', ( ( result ^ (uint16_t)cpu->acc ) & ( ( result ^ (uint16_t)value_inv ) ) & 0x0080), cpu);
     cpu->acc = (uint8_t) (result & 0x00FF);
 }
+
+void I_SBX(Processor *cpu, InstrInfo *ir) {}
+void I_SHA(Processor *cpu, InstrInfo *ir) {}
+void I_SHX(Processor *cpu, InstrInfo *ir) {}
+void I_SHY(Processor *cpu, InstrInfo *ir) {}
+void I_TAS(Processor *cpu, InstrInfo *ir) {}
+void I_JAM(Processor *cpu, InstrInfo *ir) {}
+void I_LXA(Processor *cpu, InstrInfo *ir) {} //unstable, do no implement
+void I_ANE(Processor *cpu, InstrInfo *ir) {} //unstable, do no implement
+void I_ARR(Processor *cpu, InstrInfo *ir) {}
+
 
 opcode opcode_matrix[] = {
                             I_BRK,	I_ORA,	I_JAM,	I_SLO,	I_NOP,	I_ORA,	I_ASL,	I_SLO,	I_PHP,	I_ORA,	I_ASL,	I_ANC,	I_NOP,	I_ORA,	I_ASL,	I_SLO,

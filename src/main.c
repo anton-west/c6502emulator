@@ -78,17 +78,22 @@ int main(int argc, char *argv[]) {
 
     //read binary file into memory array
     if (binary_mode) {
-        fread((memory),sizeof(char)*MAX_MEMORY_ADDR,1, ptr);
+        size_t n_read = fread((memory),sizeof(char)*MAX_MEMORY_ADDR,1, ptr);
+        if(n_read == 0) {
+            fprintf(stderr,"ERROR: could not properly read from program file\n");
+            exit(1);
+        }
     }
 
     //decode text file into memory array
     //hexcodes (e.g. "A9 BB 02 FF" get transformed to corresponding bytes)
     if (!binary_mode) {
         size_t i = 0;
-        while (!feof(ptr))
+        int n_read = 1;
+        while (n_read != EOF)
         {
             char str[3] = {0};
-            fscanf(ptr, "%s", str);
+            n_read = fscanf(ptr, "%s", str);
             unsigned long byte = strtoul(str,NULL,16);
             memory[i] = byte;
             i++;
@@ -103,6 +108,8 @@ int main(int argc, char *argv[]) {
     init_cpu(&cpu);
 
     start_display();
+
+    cpu.pc = 0xC000;
 
     char c;
     int cont = 1;
