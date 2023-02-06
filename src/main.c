@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 #include "display.h"
-
+#include "logging.h"
 #include "cpu.h"
 
 /*
@@ -23,43 +23,67 @@
 
 #define MAX_MEMORY_ADDR 65536
 
-int main(int argc, char *argv[]) {	
-    
-    //open file to read in program code
-    if (argc < 3) {
-        fprintf(stderr, "ERROR: Not enough arguments, input file not specified!\n");
+int main(int argc, char *argv[]) {
+
+    uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
+
+    //print help message
+    if(strcmp("h", argv[1]) == 0 || strcmp("help", argv[1]) == 0 || strcmp("-h", argv[1]) == 0 || strcmp("--h", argv[1]) == 0 || strcmp("--help", argv[1]) == 0) {
         fprintf(stderr, "       Use -b [filename] to read instructions from a binary file\n");
         fprintf(stderr, "       Use -f [filename] to read instructions from a text file\n");
         exit(1);
     }
 
     int enable_log = 0;
-    //check if any of the arguments passed are "--log" to enable logging
-    //user should redirect stderr to file, otherwise will mess with ncurses
+    FILE *logptr = NULL;
+    //check if any of the arguments passed are "--log" to enable logging to "log.csv"
     for(int i = 0; i < argc; i++) {
         if (strcmp(argv[i], "--log") == 0) {
             enable_log = 1;
+            logptr = fopen("log.csv", "w");
+            if (logptr == NULL) {
+                fprintf(stderr,"ERROR: could not open file \"log.csv\", %s\n", strerror(errno));
+            }
         }
     }
 
+    //open file for reading 6502 program data
     FILE *ptr;
-    char *filename = argv[2];
+    char *filename;
+    int binary_mode = 0;
+    int file_mode_specified = 0;     //set to true when valid file opening option is found, otherwise, exit
+    for(int i = 0; i < argc - 1; i++) {
+        if (strcmp(argv[i], "-b") == 0) {
+            filename = argv[i + 1];
+            binary_mode = 1;
+            file_mode_specified = 1;
+        } else if(strcmp(argv[i], "-f") == 0) {
+            filename = argv[i + 1];
+            file_mode_specified = 1;
+        }
+    }
+
+    if(!file_mode_specified) {
+        fprintf(stderr, "ERROR: Invalid options specified\n");
+        fprintf(stderr, "       Use -b [filename] to read instructions from a binary file\n");
+        fprintf(stderr, "       Use -f [filename] to read instructions from a text file\n");
+        exit(1);
+    }
+
     ptr = fopen(filename, "r");
     if (ptr == NULL) {
         fprintf(stderr,"ERROR: could not open file \"%s\", %s\n", filename, strerror(errno));
         exit(1);
     }
-    
-    uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
 
     //read binary file into memory array
-    if (strcmp(argv[1], "-b") == 0) {
+    if (binary_mode) {
         fread((memory),sizeof(char)*MAX_MEMORY_ADDR,1, ptr);
     }
 
     //decode text file into memory array
     //hexcodes (e.g. "A9 BB 02 FF" get transformed to corresponding bytes)
-    if (strcmp(argv[1], "-f") == 0) {
+    if (!binary_mode) {
         size_t i = 0;
         while (!feof(ptr))
         {
@@ -83,12 +107,12 @@ int main(int argc, char *argv[]) {
     char c;
     int cont = 1;
 
+    //main execution loop starts here
     while (cont) {
 
         //clear screens
         werase(win_decode);
 
-        
         //print info to display
         print_to_win(win_1, memory, 0x0000, 64);
         print_to_win(win_2, memory, 0x0040, 64);
@@ -138,10 +162,10 @@ int main(int argc, char *argv[]) {
             break;
         }
 
-        //if cpu clock 0, print to log
+        //if cpu clock == 0, print to log
         if(enable_log && cpu.cycles == 0) {
             InstrInfo info_out = disassemble(memory, cpu.pc);
-            print_ir(&info_out, &cpu);
+            print_ir(logptr, &info_out, &cpu);
         }
         
 

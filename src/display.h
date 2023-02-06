@@ -25,7 +25,4 @@ int print_to_win_cpu(Processor *cpu);
 int print_to_win_stack(uint8_t *stack, uint8_t stack_pointer);
 int print_disassembly(uint8_t *memory, uint16_t start, uint16_t pc);
 
-//for debugging and logging
-int print_ir(InstrInfo *ir, Processor *cpu);
-
 #endif
