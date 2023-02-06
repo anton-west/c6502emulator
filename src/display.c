@@ -307,7 +307,8 @@ int print_ir(InstrInfo *ir, Processor *cpu) {
 int print_disassembly(uint8_t *memory, uint16_t start, uint16_t pc) {
     
     //start at valid region in memory, in nes system 0x8000 and 0xC000 forward is reserved for prog data
-    int abs_addr = own_max(start, 0xC000);
+    //0 for now so that multiply program displays properly
+    int abs_addr = own_max(start, 0);
     int passed_pc = 0;
 
     //print 20 instruction

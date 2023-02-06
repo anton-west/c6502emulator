@@ -33,6 +33,15 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
+    int enable_log = 0;
+    //check if any of the arguments passed are "--log" to enable logging
+    //user should redirect stderr to file, otherwise will mess with ncurses
+    for(int i = 0; i < argc; i++) {
+        if (strcmp(argv[i], "--log") == 0) {
+            enable_log = 1;
+        }
+    }
+
     FILE *ptr;
     char *filename = argv[2];
     ptr = fopen(filename, "r");
@@ -42,11 +51,10 @@ int main(int argc, char *argv[]) {
     }
     
     uint8_t memory[ MAX_MEMORY_ADDR ] = {0};
-    uint8_t temp_memory[ MAX_MEMORY_ADDR ] = {0};
 
     //read binary file into memory array
     if (strcmp(argv[1], "-b") == 0) {
-        fread((temp_memory),sizeof(char)*MAX_MEMORY_ADDR,1, ptr);
+        fread((memory),sizeof(char)*MAX_MEMORY_ADDR,1, ptr);
     }
 
     //decode text file into memory array
@@ -63,27 +71,19 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    for (int i = 0; i < 0x4000; i++ ) {
-        memory[0x8000 + i] = temp_memory[0x0010 + i];
-        memory[0xC000 + i] = temp_memory[0x0010 + i];
-    }
-
     InstrInfo current_instruction = {0};
-    
     Processor cpu = {0};
         
     cpu_set_memory(&cpu, memory);
     
     init_cpu(&cpu);
-    
-    cpu.pc = 0xC000;
 
     start_display();
 
     char c;
     int cont = 1;
-    unsigned int   cycles = 0;
-    while (cont && cycles < 50000) {
+
+    while (cont) {
 
         //clear screens
         werase(win_decode);
@@ -91,19 +91,19 @@ int main(int argc, char *argv[]) {
         
         //print info to display
         print_to_win(win_1, memory, 0x0000, 64);
-        print_to_win(win_2, memory, 0xC000-16, 64);
+        print_to_win(win_2, memory, 0x0040, 64);
 
         print_to_win_sr(cpu.status_reg);
         print_to_win_cpu(&cpu);
         print_to_win_stack(memory, cpu.sp);
 
-        print_disassembly(memory, cpu.pc-14 , cpu.pc);
+        print_disassembly(memory, cpu.pc-10 , cpu.pc);
         
         refresh();
 
-        //c = getch();
+        c = getch();
 
-        switch ('s')
+        switch (c)
         {
         case 'q':
             cont = 0;
@@ -121,7 +121,6 @@ int main(int argc, char *argv[]) {
 
         case 's':
             cpu_clock(&cpu, &current_instruction);
-            cycles++;
             break;
         
         case 'r':
@@ -140,7 +139,7 @@ int main(int argc, char *argv[]) {
         }
 
         //if cpu clock 0, print to log
-        if(cpu.cycles == 0) {
+        if(enable_log && cpu.cycles == 0) {
             InstrInfo info_out = disassemble(memory, cpu.pc);
             print_ir(&info_out, &cpu);
         }
