@@ -4,6 +4,13 @@
 #include "display.h"
 #include "cpu.h"
 
+WINDOW *win_1;
+WINDOW *win_2;
+WINDOW *win_sr;
+WINDOW *win_cpu;
+WINDOW *win_stack;
+WINDOW *win_decode;
+
 int get_starty(int height) { 
     return (LINES - height) / 2;
 }
@@ -22,6 +29,25 @@ int own_max(int a, int b) {
     } else {
         return b;
     }
+}
+
+WINDOW *get_win_1() {
+    return win_1;
+}
+WINDOW *get_win_2() {
+    return win_2;
+}
+WINDOW *get_win_sr() {
+    return win_sr;
+}
+WINDOW *get_win_cpu() {
+    return win_cpu;
+}
+WINDOW *get_win_stack() {
+    return win_stack;
+}
+WINDOW *get_win_decode() {
+    return win_decode;
 }
 
 WINDOW *create_newwin(int height, int width, int starty, int startx)

@@ -6,12 +6,12 @@
 #include "cpu.h"
 #include "opcodes.h"
 
-WINDOW *win_1;
-WINDOW *win_2;
-WINDOW *win_sr;
-WINDOW *win_cpu;
-WINDOW *win_stack;
-WINDOW *win_decode;
+WINDOW *get_win_1();
+WINDOW *get_win_2();
+WINDOW *get_win_sr();
+WINDOW *get_win_cpu();
+WINDOW *get_win_stack();
+WINDOW *get_win_decode();
 
 int start_display();
 

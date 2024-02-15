@@ -114,6 +114,10 @@ int main(int argc, char *argv[]) {
     char c;
     int cont = 1;
 
+    WINDOW *win_1 = get_win_1();
+    WINDOW *win_2 = get_win_2();
+    WINDOW *win_decode = get_win_decode();
+
     //main execution loop starts here
     while (cont) {
 
