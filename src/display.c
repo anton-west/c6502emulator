@@ -284,7 +284,7 @@ int print_disassembly(uint8_t *memory, uint16_t start, uint16_t pc) {
     return 0;
 }
 
-int start_display() {
+int start_display(void) {
 
 	int startx, starty;
 	initscr();			/* Start curses mode 		*/
@@ -321,7 +321,7 @@ int start_display() {
     return 0;
 }
 
-int close_display() {
+int close_display(void) {
    
     destroy_win(win_1);
     destroy_win(win_2);

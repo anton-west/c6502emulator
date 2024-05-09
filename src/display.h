@@ -13,9 +13,9 @@ WINDOW *win_cpu;
 WINDOW *win_stack;
 WINDOW *win_decode;
 
-int start_display();
+int start_display(void);
 
-int close_display();
+int close_display(void);
 
 //print to win_1 and win_2
 int print_to_win(WINDOW *win, uint8_t* data, unsigned int data_start, int data_n);

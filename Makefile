@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-g -Wall -Wextra -pedantic -std=c99 
 LDFLAGS=-I/opt/homebrew/include -L/opt/homebrew/lib
-LDLIBS=-lncurses -lcmocka
+LDLIBS=-lncurses
 
 BINDIR=bin/debug
 BIN=$(BINDIR)/c6502
