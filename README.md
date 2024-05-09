@@ -3,8 +3,6 @@
 
 ## Dependencies
 Make sure you have `ncurses` available on your system.
-To run tests, make sure you have the `cmocka` unit testing
-framework installed.
 
 ## Compiling
 `make` - compile
